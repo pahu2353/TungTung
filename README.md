@@ -1,27 +1,62 @@
-# Welcome to `spootify`
-Relive memories and discover new artists.
+# Welcome to `TungTung` (formerly `spootify`)
+Like Uber, but for services — use our website to call a plumber to fix your pipes, or a gardener to de-weed your garden!
 
 ## Sample Dataset
-The sample dataset is from Spotify's `Extended Streaming History`, which can be requested by Spotify users from https://www.spotify.com/ca-en/account/privacy/.
+The dataset will be entirely populated by users. See below for how to populate the `Accounts` table with our sample dataset.
 
-## Sample Database
-We created a sample database (`spootify.sql`) with the following commands:
+## Dependencies
+- Java 17 SDK
 
+On VSCode:
+- Java Extension Pack
+- Spring Boot Extension Pack
+
+## Installation Instructions
+In the future, this app will be dockerized for a streamlined experience. For now, we will use manual configuration.
+
+First, install the dependecies above. Then, clone the repo:
 ```
-mysql -u root -p
+git clone https://github.com/pahu2353/spootify.git
+cd spootify
 ```
 
+Then, create the sample database and tables:
 ```
-CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(50 NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+CREATE DATABASE IF NOT EXISTS TungTung;
+USE TungTung;
+
+CREATE TABLE Account (
+  uid              INT         PRIMARY KEY,
+  name             VARCHAR(100),
+  profile_picture  TEXT,
+  contact_info     VARCHAR(100),
+  overall_rating   FLOAT       DEFAULT NULL
 );
+
+INSERT INTO `Account`
+  (`uid`, `name`, `profile_picture`,                       `contact_info`,         `overall_rating`)
+VALUES
+  (1,    'Alice Smith',   'https://example.com/profiles/alice.jpg',   'alice@example.com',   4.5),
+  (2,    'Bob Johnson',   'https://example.com/profiles/bob.jpg',     'bob@example.com',     3.8),
+  (3,    'Charlie Davis', NULL,                                    'charlie@example.com', NULL),
+  (4,    'Diana Evans',   'https://example.com/profiles/diana.jpg',  'diana@example.com',   4.9),
+  (5,    'Ethan Wilson',  NULL,                                    'ethan@example.com',   4.2),
+  (6,    'Fiona Garcia',  'https://example.com/profiles/fiona.jpg',  'fiona@example.com',   4.0);
 ```
 
-Then, the schema and data can be exported with `mysqldump -u root -p spootify > spootify.sql`.
+Configure credentials in `src/main/resources/application.properties` as follows:
+```
+spring.application.name=TungTung
+spring.datasource.url=jdbc:mysql://localhost:3306/TungTung?useSSL=false&serverTimezone=UTC
+spring.datasource.username=[YOUR_USERNAME]
+spring.datasource.password=[YOUR_PASSWORD]
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+```
 
-## Using the Sample Database
-After cloning from GitHub, run `mysql -u root -p < spootify.sql` to locally load the database.
+Lastly, run `./mvnw clean spring-boot:run`. Two endpoints should be accessible:
 
-
+```
+localhost:8080/hello
+localhost:8080/accounts
+```
