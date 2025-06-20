@@ -11,7 +11,7 @@ VALUES
 
 -- OUTPUT TABLE
 -- listid  listing_name     description   poster_uid capacity price duration address     longitude latitude deadline   status
--- 1       Window Cleaning  I need the... 1          2        45.45 1        99 Queen... 123.9     44.2     2017-07-23 open
+-- 1       Window Cleaning  I need the... 1          2        45.45 1        99 Queen... 123.9     44.2     2026-07-23 open
 
 INSERT INTO ListingAssignment(listid, uid)
 SELECT listid, uid
