@@ -1,11 +1,13 @@
 # Welcome to `TungTung` (formerly `spootify`)
-Like Uber, but for services — use our website to call a plumber to fix your pipes, or a gardener to de-weed your garden!
+Like Uber, but for services — use our website to make a post asking for a plumber to fix your pipes, a gardener to de-weed your garden, or a math tutor to help you with your midterm prep!
 
 ## Sample Dataset
-The dataset will be entirely populated by users. See below for how to populate the `Accounts` table with our sample dataset.
+The dataset will be entirely populated by users. See below for how to set up the database with our sample dataset.
 
 ## Dependencies
 - Java 17 SDK
+- Next.js 15.3
+- MySQL
 
 On VSCode:
 - Java Extension Pack
@@ -22,7 +24,7 @@ cd TungTung
 
 ## Initializing Backend
 
-Create the sample database and tables by running `schema.sql` and `sample-dataset.sql` in `backend/src/schema`
+First, `cd backend`. Then, create the sample database and tables by running `sample-dataset.sql` in `backend/src/schema`
 
 Configure credentials in `backend/src/main/resources/application.properties` as follows:
 ```
@@ -47,9 +49,10 @@ localhost:8080/accounts/{uid}/name
 
 Steps:
 
-1. `npm install`
-2. `npm run dev`
+1. `cd frontend`
+2. `npm install`
+3. `npm run dev`
 
-After this `localhost:3000` should open on your browser
+After this `localhost:3000` should open on your browser.
 
-NOTE: Please make sure that the backend is running before running the frontend
+NOTE: Please make sure that the backend is running before running the frontend.
