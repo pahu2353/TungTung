@@ -1,6 +1,8 @@
 # Welcome to `TungTung` (formerly `spootify`)
 Like Uber, but for services — use our website to make a post asking for a plumber to fix your pipes, a gardener to de-weed your garden, or a math tutor to help you with your midterm prep!
 
+![image](https://github.com/user-attachments/assets/a7433faf-eac2-48ee-b30b-99489b020541)
+
 ## Sample Dataset
 The dataset will be entirely populated by users. See below for how to set up the database with our sample dataset.
 
