@@ -55,8 +55,8 @@ public class M1Controller {
 
     // Get name from UID
     @CrossOrigin(origins = "http://localhost:3000")
-    @GetMapping("/accounts/{uid}/name")
-    public String getAccountName(@PathVariable("uid") int uid) {
+    @GetMapping("/users/{uid}/name")
+    public String getUserName(@PathVariable("uid") int uid) {
         String sql = "SELECT name FROM Users WHERE uid = ?";
         return jdbc.queryForObject(sql, String.class, uid);
     }
