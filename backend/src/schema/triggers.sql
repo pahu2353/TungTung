@@ -29,8 +29,8 @@ FOR EACH ROW
 BEGIN
   DECLARE listing_owner INT;
 
-  SELECT poster_uid INTO listing_owner
-  FROM Listings
+  SELECT uid INTO listing_owner
+  FROM Posts
   WHERE listid = NEW.listid;
 
   IF listing_owner = NEW.uid THEN

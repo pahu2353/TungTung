@@ -30,7 +30,6 @@ INSERT INTO
     Listings (
         listing_name,
         description,
-        poster_uid,
         capacity,
         price,
         duration,
@@ -46,7 +45,6 @@ VALUES
         'Backyard Gardening Assistance',
         'I need someone to help me with trimming hedges and de-weeding.',
         1,
-        1,
         25.00,
         120,
         '123 Maple St, Toronto, ON',
@@ -59,7 +57,6 @@ VALUES
     (
         'Math Tutoring Session',
         'I am one of the worst math students in all of Toronto, having averaged 35% as a student at the University of Waterloo. I need LOTS of help with algebra and calculus.',
-        3,
         2,
         40.00,
         90,
@@ -73,7 +70,6 @@ VALUES
     (
         'General Plumbing',
         'My shower is leaking and I have put a bucket underneath it. Would appreciate some help!',
-        2,
         1,
         60.00,
         60,
@@ -84,6 +80,8 @@ VALUES
         '2025-06-17 11:30:00',
         'open'
     );
+
+INSERT INTO Posts (listid, uid) VALUES (1, 1), (2, 3), (3, 2);
 
 INSERT INTO
     BelongsTo (listid, category_id)

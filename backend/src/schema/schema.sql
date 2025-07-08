@@ -18,7 +18,6 @@ CREATE TABLE Listings (
   listid INT AUTO_INCREMENT PRIMARY KEY,
   listing_name VARCHAR(100) NOT NULL,
   description TEXT,
-  poster_uid INT NOT NULL,
   capacity INT DEFAULT 1 CHECK (capacity > 0),
   price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
   duration INT NOT NULL CHECK (duration > 0),
@@ -27,8 +26,7 @@ CREATE TABLE Listings (
   latitude DECIMAL(9,6) NOT NULL,
   posting_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deadline TIMESTAMP,
-  status ENUM('open', 'taken', 'completed', 'cancelled'),
-  FOREIGN KEY (poster_uid) REFERENCES Users(uid)
+  status ENUM('open', 'taken', 'completed', 'cancelled')
 );
 
 CREATE TABLE BelongsTo (
@@ -55,8 +53,16 @@ CREATE TABLE AssignedTo (
   FOREIGN KEY (uid) REFERENCES Users(uid)
 );
 
+-- new table for managing which users posted which listings
+CREATE TABLE Posts (
+  listid INT,
+  uid INT,
+  PRIMARY KEY (listid, uid),
+  FOREIGN KEY (listid) REFERENCES Listings(listid),
+  FOREIGN KEY (uid) REFERENCES Users(uid)
+);
+
 CREATE TABLE Reviews (
-  -- review_id INT AUTO_INCREMENT PRIMARY KEY,
   listid INT,
   reviewer_uid INT,
   reviewee_uid INT,
