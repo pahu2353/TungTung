@@ -54,4 +54,18 @@ public class M1Controller {
         return jdbc.queryForObject(sql, String.class, uid);
     }
 
+    @GetMapping("/db/seed")
+    public Boolean seedDatabase() {
+        Seed seed = new Seed(this.jdbc);
+        try {
+            Seed.createAccounts();
+
+            Seed.createListings();
+        } catch (Exception e) {
+            System.err.println(e);
+            return false;
+        }
+        return true;
+    }
+
 }
