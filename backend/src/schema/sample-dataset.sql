@@ -2,7 +2,7 @@ DROP DATABASE IF EXISTS TungTung;
 CREATE DATABASE TungTung;
 USE TungTung;
 
-CREATE TABLE Accounts (
+CREATE TABLE Users (
   uid INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   profile_picture TEXT,
@@ -32,10 +32,10 @@ CREATE TABLE Listings (
   posting_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deadline TIMESTAMP,
   status ENUM('open', 'taken', 'completed', 'cancelled'),
-  FOREIGN KEY (poster_uid) REFERENCES Accounts(uid)
+  FOREIGN KEY (poster_uid) REFERENCES Users(uid)
 );
 
-CREATE TABLE ListingCategory (
+CREATE TABLE BelongsTo (
   listid INT,
   category_id INT,
   PRIMARY KEY (listid, category_id),
@@ -43,24 +43,24 @@ CREATE TABLE ListingCategory (
   FOREIGN KEY (category_id) REFERENCES TaskCategories(category_id)
 );
 
-CREATE TABLE AccountInterestCategories (
+CREATE TABLE InterestedIn (
   uid INT,
   category_id INT,
   PRIMARY KEY (uid, category_id),
-  FOREIGN KEY (uid) REFERENCES Accounts(uid),
+  FOREIGN KEY (uid) REFERENCES Users(uid),
   FOREIGN KEY (category_id) REFERENCES TaskCategories(category_id)
 );
 
-CREATE TABLE ListingAssignment (
+CREATE TABLE AssignedTo (
   listid INT,
   uid INT,
   PRIMARY KEY (listid, uid),
   FOREIGN KEY (listid) REFERENCES Listings(listid),
-  FOREIGN KEY (uid) REFERENCES Accounts(uid)
+  FOREIGN KEY (uid) REFERENCES Users(uid)
 );
 
 CREATE TABLE Reviews (
-  review_id INT AUTO_INCREMENT PRIMARY KEY,
+  -- review_id INT AUTO_INCREMENT PRIMARY KEY,
   listid INT,
   reviewer_uid INT,
   reviewee_uid INT,
@@ -68,8 +68,10 @@ CREATE TABLE Reviews (
   comment TEXT,
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (listid) REFERENCES Listings(listid),
-  FOREIGN KEY (reviewer_uid) REFERENCES Accounts(uid),
-  FOREIGN KEY (reviewee_uid) REFERENCES Accounts(uid),
+  FOREIGN KEY (reviewer_uid) REFERENCES Users(uid),
+  FOREIGN KEY (reviewee_uid) REFERENCES Users(uid),
+  -- Composite primary key to ensure unique reviews per listing and user pair (review_id removed)
+  PRIMARY KEY (listid, reviewer_uid, reviewee_uid), 
   CONSTRAINT check_no_self_review CHECK (reviewer_uid != reviewee_uid),
   UNIQUE unique_review(listid, reviewer_uid, reviewee_uid)
 );
@@ -100,7 +102,7 @@ END$$
 
 -- prevent self-assignment
 CREATE TRIGGER trg_prevent_self_assignment
-BEFORE INSERT ON ListingAssignment
+BEFORE INSERT ON AssignedTo
 FOR EACH ROW
 BEGIN
   DECLARE listing_owner INT;
@@ -117,7 +119,7 @@ END$$
 
 -- prevent assignment to closed/taken listings
 CREATE TRIGGER trg_prevent_taken_or_closed
-BEFORE INSERT ON ListingAssignment
+BEFORE INSERT ON AssignedTo
 FOR EACH ROW
 BEGIN
   DECLARE listing_status ENUM('open', 'taken', 'completed', 'cancelled');
@@ -140,7 +142,7 @@ BEGIN
   DECLARE is_assigned INT;
 
   SELECT COUNT(*) INTO is_assigned
-  FROM ListingAssignment
+  FROM AssignedTo
   WHERE listid = NEW.listid AND uid = NEW.reviewer_uid;
 
   IF is_assigned = 0 THEN
@@ -168,14 +170,14 @@ END$$
 
 -- update listing status to 'taken' when capacity is reached
 CREATE TRIGGER trg_listing_status_taken
-AFTER INSERT ON ListingAssignment
+AFTER INSERT ON AssignedTo
 FOR EACH ROW
 BEGIN
   DECLARE current_assignments INT;
   DECLARE max_capacity INT;
 
   SELECT COUNT(*) INTO current_assignments
-  FROM ListingAssignment
+  FROM AssignedTo
   WHERE listid = NEW.listid;
 
   SELECT capacity INTO max_capacity
@@ -200,7 +202,7 @@ BEGIN
   FROM Reviews
   WHERE reviewee_uid = NEW.reviewee_uid;
 
-  UPDATE Accounts
+  UPDATE Users
   SET overall_rating = avg_rating
   WHERE uid = NEW.reviewee_uid;
 END$$
@@ -209,7 +211,7 @@ END$$
 DELIMITER ;
 
 INSERT INTO
-    Accounts (name, profile_picture, phone_number, email)
+    Users (name, profile_picture, phone_number, email)
 VALUES
     (
         'Alice Green',
@@ -296,14 +298,14 @@ VALUES
     );
 
 INSERT INTO
-    ListingCategory (listid, category_id)
+    BelongsTo (listid, category_id)
 VALUES
     (1, 1),
     (2, 2),
     (3, 3);
 
 INSERT INTO
-    AccountInterestCategories (uid, category_id)
+    InterestedIn (uid, category_id)
 VALUES
     (2, 1),
     (2, 2),
@@ -313,7 +315,7 @@ VALUES
     (5, 5);
 
 INSERT INTO
-    ListingAssignment (listid, uid)
+    AssignedTo (listid, uid)
 VALUES
     (1, 2),
     (2, 4),

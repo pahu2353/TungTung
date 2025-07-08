@@ -88,7 +88,7 @@ export default function Home() {
         interface Review {
           reviewer_uid: number;
           reviewee_uid: number;
-          review_id: number;
+          // review_id: number;
           rating?: number;
           comment?: string;
           timestamp?: string;

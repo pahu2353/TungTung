@@ -50,7 +50,7 @@ public class M1Controller {
     @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/accounts/{uid}/name")
     public String getAccountName(@PathVariable("uid") int uid) {
-        String sql = "SELECT name FROM Accounts WHERE uid = ?";
+        String sql = "SELECT name FROM Users WHERE uid = ?";
         return jdbc.queryForObject(sql, String.class, uid);
     }
 
