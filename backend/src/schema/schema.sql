@@ -1,4 +1,4 @@
-CREATE TABLE Accounts (
+CREATE TABLE Users (
   uid INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   profile_picture TEXT,
@@ -28,10 +28,10 @@ CREATE TABLE Listings (
   posting_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deadline TIMESTAMP,
   status ENUM('open', 'taken', 'completed', 'cancelled'),
-  FOREIGN KEY (poster_uid) REFERENCES Accounts(uid)
+  FOREIGN KEY (poster_uid) REFERENCES Users(uid)
 );
 
-CREATE TABLE ListingCategory (
+CREATE TABLE BelongsTo (
   listid INT,
   category_id INT,
   PRIMARY KEY (listid, category_id),
@@ -39,24 +39,24 @@ CREATE TABLE ListingCategory (
   FOREIGN KEY (category_id) REFERENCES TaskCategories(category_id)
 );
 
-CREATE TABLE AccountInterestCategories (
+CREATE TABLE InterestedIn (
   uid INT,
   category_id INT,
   PRIMARY KEY (uid, category_id),
-  FOREIGN KEY (uid) REFERENCES Accounts(uid),
+  FOREIGN KEY (uid) REFERENCES Users(uid),
   FOREIGN KEY (category_id) REFERENCES TaskCategories(category_id)
 );
 
-CREATE TABLE ListingAssignment (
+CREATE TABLE AssignedTo (
   listid INT,
   uid INT,
   PRIMARY KEY (listid, uid),
   FOREIGN KEY (listid) REFERENCES Listings(listid),
-  FOREIGN KEY (uid) REFERENCES Accounts(uid)
+  FOREIGN KEY (uid) REFERENCES Users(uid)
 );
 
 CREATE TABLE Reviews (
-  review_id INT AUTO_INCREMENT PRIMARY KEY,
+  -- review_id INT AUTO_INCREMENT PRIMARY KEY,
   listid INT,
   reviewer_uid INT,
   reviewee_uid INT,
@@ -64,8 +64,10 @@ CREATE TABLE Reviews (
   comment TEXT,
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (listid) REFERENCES Listings(listid),
-  FOREIGN KEY (reviewer_uid) REFERENCES Accounts(uid),
-  FOREIGN KEY (reviewee_uid) REFERENCES Accounts(uid),
+  FOREIGN KEY (reviewer_uid) REFERENCES Users(uid),
+  FOREIGN KEY (reviewee_uid) REFERENCES Users(uid),
+  -- Composite primary key to ensure unique reviews per listing and user pair (review_id removed)
+  PRIMARY KEY (listid, reviewer_uid, reviewee_uid), 
   CONSTRAINT check_no_self_review CHECK (reviewer_uid != reviewee_uid),
   UNIQUE unique_review(listid, reviewer_uid, reviewee_uid)
 );

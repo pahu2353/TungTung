@@ -24,7 +24,7 @@ END$$
 
 -- prevent self-assignment
 CREATE TRIGGER trg_prevent_self_assignment
-BEFORE INSERT ON ListingAssignment
+BEFORE INSERT ON AssignedTo
 FOR EACH ROW
 BEGIN
   DECLARE listing_owner INT;
@@ -41,7 +41,7 @@ END$$
 
 -- prevent assignment to closed/taken listings
 CREATE TRIGGER trg_prevent_taken_or_closed
-BEFORE INSERT ON ListingAssignment
+BEFORE INSERT ON AssignedTo
 FOR EACH ROW
 BEGIN
   DECLARE listing_status ENUM('open', 'taken', 'completed', 'cancelled');
@@ -64,7 +64,7 @@ BEGIN
   DECLARE is_assigned INT;
 
   SELECT COUNT(*) INTO is_assigned
-  FROM ListingAssignment
+  FROM AssignedTo
   WHERE listid = NEW.listid AND uid = NEW.reviewer_uid;
 
   IF is_assigned = 0 THEN
@@ -92,14 +92,14 @@ END$$
 
 -- update listing status to 'taken' when capacity is reached
 CREATE TRIGGER trg_listing_status_taken
-AFTER INSERT ON ListingAssignment
+AFTER INSERT ON AssignedTo
 FOR EACH ROW
 BEGIN
   DECLARE current_assignments INT;
   DECLARE max_capacity INT;
 
   SELECT COUNT(*) INTO current_assignments
-  FROM ListingAssignment
+  FROM AssignedTo
   WHERE listid = NEW.listid;
 
   SELECT capacity INTO max_capacity
@@ -124,7 +124,7 @@ BEGIN
   FROM Reviews
   WHERE reviewee_uid = NEW.reviewee_uid;
 
-  UPDATE Accounts
+  UPDATE Users
   SET overall_rating = avg_rating
   WHERE uid = NEW.reviewee_uid;
 END$$

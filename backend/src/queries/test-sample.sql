@@ -1,4 +1,4 @@
-INSERT INTO Accounts(name, phone_number, email) VALUES('William Huang', '647-555-1192', 'william@uwaterloo.ca');
+INSERT INTO Users(name, phone_number, email) VALUES('William Huang', '647-555-1192', 'william@uwaterloo.ca');
 
 -- OUTPUT TABLE
 -- uid name           profile_picture phone_number email                overall_rating
@@ -13,13 +13,13 @@ VALUES
 -- listid  listing_name     description   poster_uid capacity price duration address     longitude latitude deadline   status
 -- 1       Window Cleaning  I need the... 1          2        45.45 1        99 Queen... 123.9     44.2     2026-07-23 open
 
-INSERT INTO ListingAssignment(listid, uid)
+INSERT INTO AssignedTo(listid, uid)
 SELECT listid, uid
-FROM Accounts, Listings
+FROM Users, Listings
 WHERE Listings.listid = 1 AND uid = 2 AND uid != poster_uid AND (
   SELECT COUNT(*)
-  FROM ListingAssignment
-  WHERE ListingAssignment.listid = Listings.listid
+  FROM AssignedTo
+  WHERE AssignedTo.listid = Listings.listid
 ) < Listings.capacity;
 
 -- OUTPUT TABLE

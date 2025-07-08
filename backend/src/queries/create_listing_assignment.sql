@@ -1,8 +1,8 @@
-INSERT INTO ListingAssignment(listid, uid)
+INSERT INTO AssignedTo(listid, uid)
 SELECT listid, uid
-FROM Accounts, Listings
+FROM Users, Listings
 WHERE Listings.listid = ? AND uid = ? AND uid != poster_uid AND Listing.status = 'open' AND (
   SELECT COUNT(*)
-  FROM ListingAssignment
-  WHERE ListingAssignment.listid = Listings.listid
+  FROM AssignedTo
+  WHERE AssignedTo.listid = Listings.listid
 ) < Listings.capacity;

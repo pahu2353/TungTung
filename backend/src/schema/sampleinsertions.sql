@@ -1,5 +1,5 @@
 INSERT INTO
-    Accounts (name, profile_picture, phone_number, email)
+    Users (name, profile_picture, phone_number, email)
 VALUES
     (
         'Alice Green',
@@ -86,14 +86,14 @@ VALUES
     );
 
 INSERT INTO
-    ListingCategory (listid, category_id)
+    BelongsTo (listid, category_id)
 VALUES
     (1, 1),
     (2, 2),
     (3, 3);
 
 INSERT INTO
-    AccountInterestCategories (uid, category_id)
+    InterestedIn (uid, category_id)
 VALUES
     (2, 1),
     (2, 2),
@@ -103,7 +103,7 @@ VALUES
     (5, 5);
 
 INSERT INTO
-    ListingAssignment (listid, uid)
+    AssignedTo (listid, uid)
 VALUES
     (1, 2),
     (2, 4),

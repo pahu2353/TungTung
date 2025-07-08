@@ -57,7 +57,7 @@ public class M1Controller {
     @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/accounts/{uid}/name")
     public String getAccountName(@PathVariable("uid") int uid) {
-        String sql = "SELECT name FROM Accounts WHERE uid = ?";
+        String sql = "SELECT name FROM Users WHERE uid = ?";
         return jdbc.queryForObject(sql, String.class, uid);
     }
 
@@ -103,7 +103,7 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            String sql = "INSERT INTO Accounts (name, email, phone_number) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO Users (name, email, phone_number) VALUES (?, ?, ?)";
 
             // Run the query and grab the UID, storing it in keyHolder
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -150,7 +150,7 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            String sql = "SELECT uid, name, email, phone_number FROM Accounts WHERE email = ?";
+            String sql = "SELECT uid, name, email, phone_number FROM Users WHERE email = ?";
             Map<String, Object> user = jdbc.queryForMap(sql, email);
 
             return ResponseEntity.ok(user);

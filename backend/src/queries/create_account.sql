@@ -1,1 +1,1 @@
-INSERT INTO Accounts(name, phone_number, email) VALUES(?, ?, ?);
+INSERT INTO Users(name, phone_number, email) VALUES(?, ?, ?);
