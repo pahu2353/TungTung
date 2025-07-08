@@ -111,7 +111,7 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/accounts/${uid}/name`);
+      const response = await fetch(`http://localhost:8080/users/${uid}/name`);
       const name = await response.text();
       setUserNames(prev => ({
         ...prev,
