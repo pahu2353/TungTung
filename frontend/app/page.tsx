@@ -13,6 +13,25 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userNames, setUserNames] = useState<{[key: number]: string}>({});
 
+  // Auth state
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isSignup, setIsSignup] = useState(false);
+  const [authForm, setAuthForm] = useState({ 
+    name: "", 
+    email: "", 
+    phone_number: "", 
+    password: ""
+  });
+
+  // Check for existing user on page load
+  useEffect(() => {
+    const savedUser = localStorage.getItem('tungTungUser');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
   const handleGetTaskCategories = async () => {
     try {
       const response = await fetch("http://localhost:8080/taskcategories");
@@ -48,6 +67,42 @@ export default function Home() {
     
     loadData();
   }, []);
+
+  // Auth functions
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const endpoint = isSignup ? '/signup' : '/login';
+      const body = isSignup 
+        ? { name: authForm.name, email: authForm.email, password: authForm.password, phone_number: authForm.phone_number }
+        : { email: authForm.email, password: authForm.password };
+      
+      const response = await fetch(`http://localhost:8080${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        localStorage.setItem('tungTungUser', JSON.stringify(data));
+        setUser(data);
+        setShowAuthModal(false);
+        setAuthForm({ name: "", email: "", phone_number: "", password: "" });
+      } else {
+        alert(data.error || 'Authentication failed');
+      }
+    } catch (error) {
+      alert('Network error');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tungTungUser');
+    setUser(null);
+  };
 
   // Fetch user name by UID
   const fetchUserName = async (uid: number) => {
@@ -138,11 +193,115 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
       
         <div className="text-center sm:text-left">
-          <h1 className="text-2xl font-bold mb-4">TungTung.</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Get what you need done.
-          </p>
+          <div className="flex justify-between items-center w-full max-w-4xl">
+            <div>
+              <h1 className="text-2xl font-bold mb-4">TungTung.</h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Get what you need done.
+              </p>
+            </div>
+            
+            {/* Auth section */}
+            <div className="flex items-center gap-4">
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm">Welcome, {user.name}!</span>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Login / Sign Up
+                </button>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Auth Modal */}
+        {showAuthModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
+              <h2 className="text-xl font-bold mb-4">
+                {isSignup ? 'Sign Up' : 'Login'}
+              </h2>
+              
+              <form onSubmit={handleAuth}>
+                {isSignup && (
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    value={authForm.name}
+                    onChange={(e) => setAuthForm({...authForm, name: e.target.value})}
+                    className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                    required
+                  />
+                )}
+                
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+                  className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                  required
+                />
+                
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                  className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                  required
+                />
+                
+                {isSignup && (
+                  <input
+                    type="tel"
+                    placeholder="Phone Number (optional)"
+                    value={authForm.phone_number}
+                    onChange={(e) => setAuthForm({...authForm, phone_number: e.target.value})}
+                    className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                  />
+                )}
+                
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+                  >
+                    {isSignup ? 'Sign Up' : 'Login'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(false)}
+                    className="flex-1 bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+              
+              <p className="text-center mt-4 text-sm">
+                {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
+                <button
+                  onClick={() => setIsSignup(!isSignup)}
+                  className="text-blue-500 hover:underline"
+                >
+                  {isSignup ? 'Login' : 'Sign Up'}
+                </button>
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Loading indicator */}
         {loading && (
