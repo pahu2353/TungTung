@@ -82,7 +82,7 @@ public class Seed {
             INSERT INTO Listings
               (listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
             VALUES
-              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """;
 
         int capacity = rnd.nextInt(3) + 1;
