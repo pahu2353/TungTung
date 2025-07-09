@@ -64,9 +64,9 @@ public class M1Controller {
     // fix this
     @GetMapping("/db/seed")
     public Boolean seedDatabase() {
-        //Seed seed = new Seed(this.jdbc); 
+        Seed seed = new Seed(this.jdbc); 
         try {
-            //seed.populate();
+            seed.populate();
         } catch (Exception e) {
             System.err.println(e);
             return false;
