@@ -1137,9 +1137,6 @@ INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timest
 (65, 12, 48, 4, 'Package delivered on time, though the humming was a bit much. Very enthusiastic.', '2026-06-22 12:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(68, 42, 35, 5, 'Sharp shopper! Didn’t get distracted by the snack aisle once. Impressive.', '2026-06-25 09:00:00');
-
-INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
 (72, 23, 57, 2, 'Setup went okay, but now my printer seems to have a mind of its own. A bit spooky.', '2026-06-25 17:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
