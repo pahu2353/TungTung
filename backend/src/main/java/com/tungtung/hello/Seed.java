@@ -188,10 +188,6 @@ public class Seed {
     int p = 0;
     
     for (int i = 1; i <= numUsers; i++) {
-      int isDriver = rnd.nextInt(2);
-      if (isDriver != 1) {
-        continue;
-      }
       List<Integer> pool = new ArrayList<>();
       for (int j = 1; j <= this.postingVolume; j++) pool.add(j);
       Collections.shuffle(pool, rnd);
