@@ -2,14 +2,17 @@ package com.tungtung.hello;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.github.javafaker.Faker;
 import com.github.javafaker.Address;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Seed {
   private final JdbcTemplate jdbc;
@@ -126,14 +129,17 @@ public class Seed {
 
   public void createCategories() {
     String sql = "INSERT INTO TaskCategories(category_name) VALUES(?)";
-    List<Object[]> genreList = new ArrayList<>();
-    for (int i = 0; i < 10; i++) {
-      String category = this.faker.music().genre();
-
-      genreList.add(new Object[]{category});
+    
+    Set<String> uniqueCategories = new LinkedHashSet<>();
+    while (uniqueCategories.size() < 10) {
+      uniqueCategories.add(this.faker.leagueOfLegends().champion());
     }
-
-    this.jdbc.batchUpdate(sql, genreList);
+    
+    List<Object[]> batchArgs = uniqueCategories.stream()
+        .map(name -> new Object[]{ name })
+        .collect(Collectors.toList());
+    
+    this.jdbc.batchUpdate(sql, batchArgs);
   }
 
   public void createReviews() {
