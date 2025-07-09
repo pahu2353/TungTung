@@ -36,8 +36,8 @@ public class Seed {
     this.completedTasks = new HashSet<>();
     this.listToAuthor = new ArrayList<>();
     this.listingToUser = new HashMap<>();
-    int numCategories = 10;
-    int numUsers = 50;
+    this.numCategories = 10;
+    this.numUsers = 50;
   }
 
   public void populate() {
@@ -131,7 +131,7 @@ public class Seed {
         int categories = rnd.nextInt(4);  // 0–3 distinct picks
 
         List<Integer> pool = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) pool.add(i);
+        for (int i = 1; i <= numCategories; i++) pool.add(i);
 
         Collections.shuffle(pool, rnd);
 
@@ -153,7 +153,7 @@ public class Seed {
     String sql = "INSERT INTO TaskCategories(category_name) VALUES(?)";
     
     Set<String> uniqueCategories = new LinkedHashSet<>();
-    while (uniqueCategories.size() < 10) {
+    while (uniqueCategories.size() < numCategories) {
       uniqueCategories.add(this.faker.leagueOfLegends().champion());
     }
     
