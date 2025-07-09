@@ -30,6 +30,8 @@ public class Seed {
     this.createAccounts();
     this.createCategories();
     this.createListings();
+    this.createListingAssignments();
+    this.updateListings();
     this.createReviews();
   }
 
