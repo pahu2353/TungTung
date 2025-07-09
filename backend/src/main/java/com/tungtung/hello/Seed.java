@@ -8,6 +8,8 @@ import java.util.Random;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.github.javafaker.Faker;
+import com.github.javafaker.Address;
+import java.util.concurrent.TimeUnit;
 
 public class Seed {
   private final JdbcTemplate jdbc;
@@ -18,24 +20,33 @@ public class Seed {
     this.faker = new Faker();
   }
 
+  public void populate() {
+    this.clearDb();
+    this.createAccounts();
+    this.createCategories();
+    this.createListings();
+    this.createReviews();
+  }
+
   public void clearDb() {
-    jdbc.execute("SET FOREIGN_KEY_CHECKS = 0");
+    this.jdbc.execute("SET FOREIGN_KEY_CHECKS = 0");
     
-    jdbc.batchUpdate(
+    this.jdbc.batchUpdate(
       "TRUNCATE TABLE Users",
       "TRUNCATE TABLE Reviews",
       "TRUNCATE TABLE AssignedTo",
       "TRUNCATE TABLE InterestedIn",
       "TRUNCATE TABLE BelongsTo",
       "TRUNCATE TABLE Listings",
-      "TRUNCATE TABLE TaskCategories"
+      "TRUNCATE TABLE TaskCategories",
+      "TRUNCATE TABLE Posts"
     );
     
-    jdbc.execute("SET FOREIGN_KEY_CHECKS = 1");
+    this.jdbc.execute("SET FOREIGN_KEY_CHECKS = 1");
 }
 
 
-  public void createAccountsBatch() {
+  public void createAccounts() {
     String sql = """
       INSERT INTO Users
         (name, profile_picture, phone_number, email)
@@ -52,16 +63,46 @@ public class Seed {
         userList.add(new Object[]{ name, pfp, phone, email });
     }
 
-    jdbc.batchUpdate(sql, userList);
+    this.jdbc.batchUpdate(sql, userList);
   }
 
   public void createListings() {
     int postingId = 1;
     Random rnd = new Random();
+    List<Object[]> listingPosts = new ArrayList<>();
+    List<Object[]> categoryListings = new ArrayList<>();
     for (int id = 1; id <= 50; id++) {
       int postings = rnd.nextInt(6);
       for (int posting = 0; posting < postings; posting++, postingId++) {
         // make posting for user 'id'
+        String postingSql = """
+            INSERT INTO Listings
+              (listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
+            VALUES
+              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """;
+
+        int capacity = rnd.nextInt(3) + 1;
+        float price = rnd.nextFloat(150) + 3;
+        int duration = rnd.nextInt(4) + 1;
+
+        Address address = this.faker.address();
+
+        this.jdbc.update(
+          postingSql, 
+          this.faker.book().title(),
+          this.faker.leagueOfLegends().quote(),
+          capacity,
+          price,
+          duration,
+          address.fullAddress(),
+          address.longitude(),
+          address.latitude(),
+          this.faker.date().future(365, TimeUnit.DAYS),
+          "open"
+        );
+
+        listingPosts.add(new Object[] {postingId, id});
 
         // pick categories for each posting
         int categories = rnd.nextInt(4);  // 0–3 distinct picks
@@ -72,10 +113,15 @@ public class Seed {
         Collections.shuffle(pool, rnd);
 
         for (int i = 0; i < categories; i++) {
-          int pick = pool.get(i);
+          int category = pool.get(i);
+          categoryListings.add(new Object[] {postingId, category});
         }
       }
     }
+    String postsSql = "INSERT INTO Posts VALUES(?, ?)";
+    String categoryListSql = "INSERT INTO BelongsTo Values(?, ?)";
+    this.jdbc.batchUpdate(postsSql, listingPosts);
+    this.jdbc.batchUpdate(categoryListSql, categoryListings);
   }
 
   public void createCategories() {
@@ -87,7 +133,7 @@ public class Seed {
       genreList.add(new Object[]{category});
     }
 
-    jdbc.batchUpdate(sql, genreList);
+    this.jdbc.batchUpdate(sql, genreList);
   }
 
   public void createReviews() {
