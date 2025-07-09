@@ -26,6 +26,8 @@ public class Seed {
   private Set<Integer> completedTasks;
   private List<Integer> listToAuthor;
   private Map<Integer,Integer> listingToUser;
+  private int numCategories;
+  private int numUsers;
 
   public Seed(JdbcTemplate jdbc) {
     this.jdbc = jdbc;
@@ -34,6 +36,8 @@ public class Seed {
     this.completedTasks = new HashSet<>();
     this.listToAuthor = new ArrayList<>();
     this.listingToUser = new HashMap<>();
+    int numCategories = 10;
+    int numUsers = 50;
   }
 
   public void populate() {
@@ -72,7 +76,7 @@ public class Seed {
       """;
     List<Object[]> userList = new ArrayList<>();
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < numUsers; i++) {
         String name  = this.faker.name().firstName() + " " + this.faker.name().lastName();
         String pfp   = this.faker.internet().avatar();
         String phone = this.faker.phoneNumber().phoneNumber();
@@ -89,7 +93,7 @@ public class Seed {
     Random rnd = new Random();
     List<Object[]> listingPosts = new ArrayList<>();
     List<Object[]> categoryListings = new ArrayList<>();
-    for (int id = 1; id <= 50; id++) {
+    for (int id = 1; id <= numUsers; id++) {
       int postings = rnd.nextInt(6);
       for (int posting = 0; posting < postings; posting++, postingId++) {
         // make posting for user 'id'
@@ -183,7 +187,7 @@ public class Seed {
 
     int p = 0;
     
-    for (int i = 1; i <= 50; i++) {
+    for (int i = 1; i <= numUsers; i++) {
       int isDriver = rnd.nextInt(2);
       if (isDriver != 1) {
         continue;
