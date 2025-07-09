@@ -55,8 +55,8 @@ public class M1Controller {
 
     // Get name from UID
     @CrossOrigin(origins = "http://localhost:3000")
-    @GetMapping("/accounts/{uid}/name")
-    public String getAccountName(@PathVariable("uid") int uid) {
+    @GetMapping("/users/{uid}/name")
+    public String getUserName(@PathVariable("uid") int uid) {
         String sql = "SELECT name FROM Users WHERE uid = ?";
         return jdbc.queryForObject(sql, String.class, uid);
     }
@@ -117,7 +117,7 @@ public class M1Controller {
             }, keyHolder);
 
             int newUid = keyHolder.getKey().intValue();
-            
+
             response.put("uid", newUid);
             response.put("name", name.trim());
             response.put("email", email.trim());
@@ -130,6 +130,12 @@ public class M1Controller {
         }
     }
 
+    // We want users to be able to sign in with phone number as well
+    // so check if it's an email before we query
+    private boolean isEmail(String input) {
+        return input != null && input.contains("@") && input.contains(".");
+    }
+
     // Log user in
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/login")
@@ -138,10 +144,19 @@ public class M1Controller {
 
         try {
             String email = loginData.get("email");
+            String phoneNumber = loginData.get("phone_number");
             String password = loginData.get("password"); // WIP
 
-            if (email == null || email.trim().isEmpty()) {
-                response.put("error", "Email is required");
+            // clean values to trim whitespace
+            if (email != null)
+                email = email.trim();
+            if (phoneNumber != null)
+                phoneNumber = phoneNumber.trim();
+
+            // Allow users to log in either with email or with phone number
+            if ((email == null || email.trim().isEmpty()) &&
+                    (phoneNumber == null || phoneNumber.trim().isEmpty())) {
+                response.put("error", "Email or phone number is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
@@ -150,8 +165,19 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            String sql = "SELECT uid, name, email, phone_number FROM Users WHERE email = ?";
-            Map<String, Object> user = jdbc.queryForMap(sql, email);
+            String sql;
+            Object parameter; // Either email or phone_number
+
+            // Check whether user gave us an email or a phone number
+            if (email != null && !email.trim().isEmpty() && isEmail(email)) {
+                sql = "SELECT uid, name, email, phone_number FROM Users WHERE email = ?";
+                parameter = email.trim();
+            } else {
+                sql = "SELECT uid, name, email, phone_number FROM Users WHERE phone_number = ?";
+                parameter = phoneNumber.trim();
+            }
+
+            Map<String, Object> user = jdbc.queryForMap(sql, parameter);
 
             return ResponseEntity.ok(user);
 

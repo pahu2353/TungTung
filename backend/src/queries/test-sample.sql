@@ -5,18 +5,19 @@ INSERT INTO Users(name, phone_number, email) VALUES('William Huang', '647-555-11
 -- 1   William Huang  NULL            647-555-1192 william@uwaterloo.ca NULL
 
 INSERT INTO Listings
-  (listing_name, description, poster_uid, capacity, price, duration, address, longitude, latitude, deadline, status)
+  (listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES
-  ('Window Cleaning', 'I need the best of the best, will pay extra in tips for a good job!', 1, 2, 45.45, 1, '99 Queen St, Toronto, ON', 123.9, 44.2, '2026-07-23', 'open');
+  ('Window Cleaning', 'I need the best of the best, will pay extra in tips for a good job!', 2, 45.45, 1, '99 Queen St, Toronto, ON', 123.9, 44.2, '2026-07-23', 'open');
 
 -- OUTPUT TABLE
--- listid  listing_name     description   poster_uid capacity price duration address     longitude latitude deadline   status
--- 1       Window Cleaning  I need the... 1          2        45.45 1        99 Queen... 123.9     44.2     2026-07-23 open
+-- listid  listing_name     description   capacity price duration address     longitude latitude deadline   status
+-- 1       Window Cleaning  I need the... 2        45.45 1        99 Queen... 123.9     44.2     2026-07-23 open
 
 INSERT INTO AssignedTo(listid, uid)
 SELECT listid, uid
 FROM Users, Listings
-WHERE Listings.listid = 1 AND uid = 2 AND uid != poster_uid AND (
+JOIN Posts ON Listings.listid = Posts.listid
+WHERE Listings.listid = 1 AND uid = 2 AND uid != Posts.uid AND (
   SELECT COUNT(*)
   FROM AssignedTo
   WHERE AssignedTo.listid = Listings.listid
