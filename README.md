@@ -58,10 +58,10 @@ POST localhost:8080/login
 The production database has already been generated using JavaFaker to create realistic synthetic data, including user accounts, service listings, categories, assignments, and reviews. To load the production dataset into your database, simply run the following command:
 
 ```bash
-mysql -u root -p < backend/src/schema/production.sql
+mysql -u [YOUR_USERNAME] -p < backend/src/schema/production.sql
 ```
 
-This scalable approach allows us to control the volume and complexity of the data by adjusting parameters, simulating diverse user behaviors
+This scalable approach allows us to control the volume and complexity of the data by adjusting parameters, simulating diverse user behaviors and service demands.
 
 ## Initializing Frontend
 
