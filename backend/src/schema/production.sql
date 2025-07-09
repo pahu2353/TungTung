@@ -1083,3 +1083,64 @@ INSERT INTO AssignedTo (listid, uid) VALUES
 
 -- Listing 78 (capacity 1, owner 30)
 INSERT INTO AssignedTo (listid, uid) VALUES (78, 42);
+
+
+
+-- temporary manaul updated needed for adding reviews (will fix triggers for this later)
+-- Step 1: Update listings to 'open'
+UPDATE Listings SET status = 'open' WHERE listid IN (7,14,27,31,39,45,53,57,65,68,72,80);
+
+-- Step 2: Insert AssignedTo (assigned users other than owners)
+
+INSERT INTO AssignedTo (listid, uid) VALUES (7, 12);
+INSERT INTO AssignedTo (listid, uid) VALUES (14, 42);
+INSERT INTO AssignedTo (listid, uid) VALUES (27, 57);
+INSERT INTO AssignedTo (listid, uid) VALUES (31, 12);
+INSERT INTO AssignedTo (listid, uid) VALUES (39, 5);
+INSERT INTO AssignedTo (listid, uid) VALUES (45, 12);
+INSERT INTO AssignedTo (listid, uid) VALUES (53, 42);
+INSERT INTO AssignedTo (listid, uid) VALUES (57, 61);
+INSERT INTO AssignedTo (listid, uid) VALUES (65, 12);
+INSERT INTO AssignedTo (listid, uid) VALUES (68, 42);
+INSERT INTO AssignedTo (listid, uid) VALUES (72, 23);
+INSERT INTO AssignedTo (listid, uid) VALUES (80, 5);
+
+-- Step 3: Update listings to 'completed'
+UPDATE Listings SET status = 'completed' WHERE listid IN (7,14,27,31,39,45,53,57,65,68,72,80);
+
+-- Step 4: Insert reviews (reviewer = owner, reviewee = assigned user)
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(7, 12, 5, 4, 'Kids survived the evening without any sock casualties. Pretty sure they even liked the babysitter!', '2026-06-22 20:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(14, 42, 61, 3, 'Laptop updated, but now it insists on singing whenever I open it. 3 stars for personality.', '2026-06-20 09:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(27, 57, 23, 5, 'Followed the grocery list exactly. Not a single cookie was sneaked. Legendary!', '2026-06-25 10:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(31, 12, 77, 2, 'Printer works, but my computer now thinks it’s smarter than me. Send help.', '2026-06-23 15:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(39, 5, 84, 5, 'Parcel delivered faster than my coffee cools. Couldn’t ask for better!', '2026-06-22 14:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(45, 12, 35, 4, 'Dog was happy, which is the real win. Couldn’t stop stealing my socks, though.', '2026-06-25 16:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(53, 42, 5, 3, 'Got all the fruits and veggies, but somehow ended up with a suspicious amount of bananas.', '2026-06-24 11:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(57, 61, 42, 1, 'Printer is set up but WiFi now behaves like it’s the boss. One star for chaos, five for effort.', '2026-06-24 10:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(65, 12, 48, 4, 'Package delivered on time, though the humming was a bit much. Very enthusiastic.', '2026-06-22 12:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(68, 42, 35, 5, 'Sharp shopper! Didn’t get distracted by the snack aisle once. Impressive.', '2026-06-25 09:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(72, 23, 57, 2, 'Setup went okay, but now my printer seems to have a mind of its own. A bit spooky.', '2026-06-25 17:00:00');
+
+INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
+(80, 5, 42, 5, 'Documents delivered with a smile (or maybe that was just me). Fast and reliable!', '2026-06-22 11:00:00');
