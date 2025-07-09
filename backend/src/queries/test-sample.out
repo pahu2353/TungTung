@@ -13,3 +13,7 @@ Query OK, 1 row affected (0.00 sec)
 |           5 | Cleaning      |
 +-------------+---------------+
 5 rows in set (0.00 sec)
+listid	listing_name	description	capacity	price	duration	address	longitude	latitude	posting_time	deadline	status
+1	Backyard Gardening Assistance	I need someone to help me with trimming hedges and de-weeding.	1	25.00	120	123 Maple St, Toronto, ON	-79.383200	43.653200	2025-06-18 09:00:00	2025-06-18 12:00:00	taken
+ERROR 1064 (42000) at line 10: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'GROUP BY L.listid
+HAVING COUNT(DISTINCT T.category_name) = 1

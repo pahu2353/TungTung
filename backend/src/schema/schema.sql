@@ -7,6 +7,8 @@ CREATE TABLE Users (
   overall_rating FLOAT DEFAULT NULL,
   CONSTRAINT check_contact CHECK (phone_number IS NOT NULL OR email IS NOT NULL),
   CONSTRAINT check_overall_rating CHECK (overall_rating IS NULL OR (overall_rating >= 1.0 AND overall_rating <= 5.0))
+  INDEX idx_users_email         (email),
+  INDEX idx_users_phone_number  (phone_number)
 );
 
 CREATE TABLE TaskCategories (
