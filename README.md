@@ -43,7 +43,7 @@ Lastly, run `./mvnw clean spring-boot:run` in backend. These endpoints should be
 GET  localhost:8080/hello
 GET  localhost:8080/taskcategories
 GET  localhost:8080/listings
-GET  localhost:8080/listings/filter?categories=<csv of category names>
+GET  localhost:8080/listings/filter
 GET  localhost:8080/listings/{listingId}/reviews
 GET  localhost:8080/users/{uid}/name
 GET  localhost:8080/db/seed
