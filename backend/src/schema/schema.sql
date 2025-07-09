@@ -35,6 +35,7 @@ CREATE TABLE BelongsTo (
   listid INT,
   category_id INT,
   PRIMARY KEY (listid, category_id),
+  INDEX idx_belongsto_category (category_id),
   FOREIGN KEY (listid) REFERENCES Listings(listid),
   FOREIGN KEY (category_id) REFERENCES TaskCategories(category_id)
 );
