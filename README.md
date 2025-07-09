@@ -1,7 +1,8 @@
 # Welcome to `TungTung`
 Like Uber, but for services — use our website to make a post asking for a plumber to fix your pipes, a gardener to de-weed your garden, or a math tutor to help you with your midterm prep!
 
-![image](https://github.com/user-attachments/assets/a7433faf-eac2-48ee-b30b-99489b020541)
+<!-- ![image](https://github.com/user-attachments/assets/a7433faf-eac2-48ee-b30b-99489b020541) -->
+![alt text](image.png)
 
 ## Sample Dataset
 The dataset will be entirely populated by users. See below for how to set up the database with our sample dataset.
@@ -51,6 +52,16 @@ GET  localhost:8080/db/seed
 POST localhost:8080/signup
 POST localhost:8080/login
 ```
+
+## Accessing the Production Database
+
+The production database has already been generated using JavaFaker to create realistic synthetic data, including user accounts, service listings, categories, assignments, and reviews. To load the production dataset into your database, simply run the following command:
+
+```bash
+mysql -u [YOUR_USERNAME] -p < backend/src/schema/production.sql
+```
+
+This scalable approach allows us to control the volume and complexity of the data by adjusting parameters, simulating diverse user behaviors and service demands.
 
 ## Initializing Frontend
 
