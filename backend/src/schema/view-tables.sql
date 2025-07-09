@@ -21,8 +21,7 @@ SELECT * FROM InterestedIn;
 SELECT * FROM AssignedTo;
 
 -- View all Posts (who posted what)
--- SELECT * FROM Posts;
--- do this later, keep poster_uid for now
+SELECT * FROM Posts;
 
 -- View all reviews
 SELECT * FROM Reviews;
