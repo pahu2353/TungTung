@@ -45,9 +45,9 @@ public class Seed {
     this.createAccounts();
     this.createCategories();
     this.createListings();
-    this.createListingAssignments();
-    this.updateListings();
-    this.createReviews();
+    this.createListingAssignments(); // First assign users to listings
+    this.updateListings();           // Then update statuses (including to "completed")
+    this.createReviews();            // Finally create reviews for completed, assigned listings
   }
 
   public void clearDb() {
@@ -165,70 +165,103 @@ public class Seed {
   }
 
   public void createReviews() {
-    // user must be assigned
-    // listing must be completed
+    System.out.println("Creating reviews...");
+    System.out.println("Completed tasks: " + this.completedTasks.size());
+    System.out.println("Assigned users: " + this.listingToUser.size());
+    
     Random rnd = new Random();
-    String sql = "INSERT INTO Reviews VALUES(?, ?, ?, ?, ?)";
-    for (int listing = 1; listing <= postingVolume; listing++) {
-      if (this.listingToUser.containsKey(listing) && this.completedTasks.contains(listing)) {
-        int reviewer = listingToUser.get(listing);
-        int reviewee = this.listToAuthor.get(listing - 1);
-        int rating = rnd.nextInt(5) + 1;
-        String comment = this.faker.yoda().quote();
+    String sql = "INSERT INTO Reviews(listid, reviewer_uid, reviewee_uid, rating, comment) VALUES(?, ?, ?, ?, ?)";
+    int reviewsCreated = 0;
+    
+    for (int listing : this.completedTasks) {
+        if (this.listingToUser.containsKey(listing)) {
+            int reviewer = listingToUser.get(listing);
+            int reviewee = this.listToAuthor.get(listing - 1);
+            int rating = rnd.nextInt(5) + 1;
+            String comment = this.faker.yoda().quote();
 
-        this.jdbc.update(sql, listing, reviewer, reviewee, rating, comment);
-      }
+            try {
+                this.jdbc.update(sql, listing, reviewer, reviewee, rating, comment);
+                reviewsCreated++;
+            } catch (Exception e) {
+                System.out.println("Error creating review for listing " + listing + ": " + e.getMessage());
+            }
+        }
     }
+    
+    System.out.println("Successfully created " + reviewsCreated + " reviews");
   }
 
   public void createListingAssignments() {
     Random rnd = new Random();
     List<Object[]> listAssigns = new ArrayList<>();
-
-    int p = 0;
     
-    for (int i = 1; i <= numUsers; i++) {
-      List<Integer> pool = new ArrayList<>();
-      for (int j = 1; j <= this.postingVolume; j++) pool.add(j);
-      Collections.shuffle(pool, rnd);
-      int picked = pool.get(p);
-      if (this.listToAuthor.get(picked - 1) == i) {
-        continue;
-      }
-      this.listingToUser.put(picked, i);
-      listAssigns.add(new Object[] {picked, i});
-      p++;
+    String openListingsSql = "SELECT listid FROM Listings WHERE status = 'open'";
+    List<Integer> openListings = jdbc.queryForList(openListingsSql, Integer.class);
+    
+    if (openListings.isEmpty()) {
+        System.out.println("Warning: No open listings available for assignment");
+        return;
+    }
+    
+    int assignmentsMade = 0;
+    for (int i = 1; i <= numUsers && assignmentsMade < openListings.size(); i++) {
+        int randomIndex = rnd.nextInt(openListings.size());
+        int picked = openListings.get(randomIndex);
+        
+        if (this.listToAuthor.get(picked - 1) == i) {
+            continue;
+        }
+        
+        this.listingToUser.put(picked, i);
+        listAssigns.add(new Object[] {picked, i});
+        
+        openListings.remove(randomIndex);
+        assignmentsMade++;
+    }
+
+    if (listAssigns.isEmpty()) {
+        System.out.println("Warning: No assignments could be made");
+        return;
     }
 
     String sql = "INSERT INTO AssignedTo VALUES(?, ?)";
     this.jdbc.batchUpdate(sql, listAssigns);
+    
+    System.out.println("Created " + assignmentsMade + " listing assignments");
   }
 
   public void updateListings() {
     Random rnd = new Random();
     String[] STATUSES = {
-      "open",
-      "taken",
-      "completed",
-      "cancelled"
+        "open",
+        "taken", 
+        "completed",
+        "cancelled"
     };
+    
     List<Object[]> listUpdates = new ArrayList<>();
-    for (int i = 1; i <= this.postingVolume; i++) {
-      int index = rnd.nextInt(3);
-      if (index == 0) continue;
-      if (index == 2) {
-        this.completedTasks.add(i);
-      }
-      String status = STATUSES[index];
-      listUpdates.add(new Object[]{status, i});
+    int completedCount = 0;
+    
+    // Only update listings that are assigned to a user
+    for (int listid : listingToUser.keySet()) {
+        int index = rnd.nextInt(3) + 1; // Skip "open" status (index 0) since we're updating
+        if (index == 2) { // "completed"
+            this.completedTasks.add(listid);
+            completedCount++;
+        }
+        String status = STATUSES[index];
+        listUpdates.add(new Object[]{status, listid});
     }
-
-    String sql = """
-        Update Listings
-        SET status = ?
-        WHERE listid = ?
-        """;
-
-    this.jdbc.batchUpdate(sql, listUpdates);
+    
+    System.out.println("Marking " + completedCount + " listings as completed");
+    
+    if (!listUpdates.isEmpty()) {
+        String sql = "UPDATE Listings SET status = ? WHERE listid = ?";
+        this.jdbc.batchUpdate(sql, listUpdates);
+        System.out.println("Updated " + listUpdates.size() + " listing statuses");
+    } else {
+        System.out.println("No listings to update");
+    }
   }
 }
