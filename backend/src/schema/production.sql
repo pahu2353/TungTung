@@ -580,7 +580,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (79, 'Babysitting Weekend', 'Care for 2 children, ages 5 and 7.', 1, 60.00, 480, '34 Sunset Blvd, Los Angeles, CA, USA', -118.2437, 34.0522, '2026-06-20 16:00:00', 'taken');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (80, 'Deliver Documents', 'Urgent delivery downtown.', 1, 20.00, 30, '45 Queen St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 10:00:00', 'completed');
+VALUES (80, 'Deliver Documents', 'Urgent delivery downtown.', 1, 20.00, 30, '45 Queen St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 10:00:00', 'open');
 
 
 
@@ -1088,7 +1088,7 @@ INSERT INTO AssignedTo (listid, uid) VALUES (78, 42);
 
 -- temporary manaul updated needed for adding reviews (will fix triggers for this later)
 -- Step 1: Update listings to 'open'
-UPDATE Listings SET status = 'open' WHERE listid IN (7,14,27,31,39,45,53,57,65,68,72,80);
+UPDATE Listings SET status = 'open' WHERE listid IN (7,14,27,31,39,45,53,57,65,68,72);
 
 -- Step 2: Insert AssignedTo (assigned users other than owners)
 
