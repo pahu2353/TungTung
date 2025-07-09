@@ -294,7 +294,6 @@ export default function Home() {
                       value={authForm.email}
                       onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
                       className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
-                      required
                     />
                     
                     <input
