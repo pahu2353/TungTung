@@ -47,3 +47,11 @@ SELECT * FROM TaskCategories;
 -- 2           Plumbing
 -- 3           Moving
 -- 4           Cleaning
+
+SELECT DISTINCT L.*
+FROM Listings L
+JOIN BelongsTo B ON L.listid = B.listid
+JOIN TaskCategories T ON B.category_id = T.category_id
+WHERE T.category_name IN ('Gardening'); 
+GROUP BY L.listid
+HAVING COUNT(DISTINCT T.category_name) = 1
