@@ -58,3 +58,49 @@ Steps:
 After this `localhost:3000` should open on your browser.
 
 NOTE: Please make sure that the backend is running before running the frontend.
+
+
+## Features Implemented
+
+### Feature 1: Account Creation and Login
+Users are able to create accounts and log in.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoints:
+    - `@PostMapping("/signup")`
+    - `@PostMapping("/login")`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Functions:
+    - `handleAuth`
+    - `handleLogout`
+    - `fetchUserName`
+
+---
+
+### Feature 2: Listing All Categories
+Displays a list of all available service categories.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoint:
+    - `@GetMapping("/taskcategories")`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Function:
+    - `handleGetTaskCategories`
+
+---
+
+### Feature 3: Category Filter for Listings
+Users can click categories to filter the listings. Multiple category selections will display only listings that match **all** selected categories.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoint:
+    - `@GetMapping("/listings/filter")`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Function:
+    - `toggleCategory`

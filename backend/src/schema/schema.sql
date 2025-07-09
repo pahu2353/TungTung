@@ -6,7 +6,7 @@ CREATE TABLE Users (
   email VARCHAR(100),
   overall_rating FLOAT DEFAULT NULL,
   CONSTRAINT check_contact CHECK (phone_number IS NOT NULL OR email IS NOT NULL),
-  CONSTRAINT check_overall_rating CHECK (overall_rating IS NULL OR (overall_rating >= 1.0 AND overall_rating <= 5.0))
+  CONSTRAINT check_overall_rating CHECK (overall_rating IS NULL OR (overall_rating >= 1.0 AND overall_rating <= 5.0)),
   INDEX idx_users_email         (email),
   INDEX idx_users_phone_number  (phone_number)
 );
@@ -35,6 +35,7 @@ CREATE TABLE BelongsTo (
   listid INT,
   category_id INT,
   PRIMARY KEY (listid, category_id),
+  INDEX idx_belongsto_category (category_id),
   FOREIGN KEY (listid) REFERENCES Listings(listid),
   FOREIGN KEY (category_id) REFERENCES TaskCategories(category_id)
 );
