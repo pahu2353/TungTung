@@ -192,6 +192,9 @@ public class Seed {
       for (int j = 1; j <= this.postingVolume; j++) pool.add(j);
       Collections.shuffle(pool, rnd);
       int picked = pool.get(p);
+      if (this.listToAuthor.get(picked - 1) == i) {
+        continue;
+      }
       this.listingToUser.put(picked, i);
       listAssigns.add(new Object[] {picked, i});
       p++;
