@@ -15,7 +15,6 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
-  // Auth state
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -23,11 +22,11 @@ export default function Home() {
     name: "",
     email: "",
     phone_number: "",
-    contact: "", // Single field for login
+    contact: "", // Email/phone_number
     password: "",
   });
 
-  // Check for existing user on page load
+  // Use localStorage to check if user is logged in
   useEffect(() => {
     const savedUser = localStorage.getItem("tungTungUser");
     if (savedUser) {
@@ -57,7 +56,6 @@ export default function Home() {
     }
   };
 
-  // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -68,7 +66,6 @@ export default function Home() {
     loadData();
   }, []);
 
-  // Auth functions
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -153,12 +150,10 @@ export default function Home() {
         );
         const reviews = await response.json();
 
-        // Fetch names for all reviewer and reviewee UIDs in the reviews
         const uniqueUIDs = new Set();
         interface Review {
           reviewer_uid: number;
           reviewee_uid: number;
-          // review_id: number;
           rating?: number;
           comment?: string;
           timestamp?: string;
@@ -171,7 +166,7 @@ export default function Home() {
 
         // Fetch names for all unique UIDs
         const namePromises = Array.from(uniqueUIDs).map((uid) =>
-          fetchUserName(uid)
+          fetchUserName(uid as number)
         );
         await Promise.all(namePromises);
 
@@ -207,19 +202,50 @@ export default function Home() {
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <header className="w-full flex justify-between items-center mb-8">
+        <div className="text-left">
+          <h1 className="text-4xl font-bold">
+            TungTung.
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 mt-2">
+            Get what you need done.
+          </p>
+        </div>
+        
+        <div>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span>Welcome, {user.name}!</span>
+              <button 
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            >
+              Login / Sign Up
+            </button>
+          )}
+        </div>
+      </header>
+      
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <div className="text-center sm:text-left">
           <div className="flex justify-between items-center w-full max-w-4xl">
-            <div>
+            {/* <div>
               <h1 className="text-2xl font-bold mb-4">TungTung.</h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Get what you need done.
               </p>
-            </div>
+            </div> */}
 
-            {/* Auth section */}
             <div className="flex items-center gap-4">
-              {user ? (
+              {/* {user ? (
                 <div className="flex items-center gap-4">
                   <span className="text-sm">Welcome, {user.name}!</span>
                   <button
@@ -236,7 +262,7 @@ export default function Home() {
                 >
                   Login / Sign Up
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -343,7 +369,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Horizontal scrolling task categories */}
         {taskCategories.length > 0 && (
           <div className="w-full max-w-4xl">
             <h3 className="font-semibold mb-4">
@@ -526,7 +551,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Show placeholder when no data is loaded and not loading */}
         {!loading && listings.length === 0 && taskCategories.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500 dark:text-gray-400">
