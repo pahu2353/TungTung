@@ -1103,10 +1103,9 @@ INSERT INTO AssignedTo (listid, uid) VALUES (57, 61);
 INSERT INTO AssignedTo (listid, uid) VALUES (65, 12);
 INSERT INTO AssignedTo (listid, uid) VALUES (68, 42);
 INSERT INTO AssignedTo (listid, uid) VALUES (72, 23);
-INSERT INTO AssignedTo (listid, uid) VALUES (80, 5);
 
 -- Step 3: Update listings to 'completed'
-UPDATE Listings SET status = 'completed' WHERE listid IN (7,14,27,31,39,45,53,57,65,68,72,80);
+UPDATE Listings SET status = 'completed' WHERE listid IN (7,14,27,31,39,45,53,57,65,68,72);
 
 -- Step 4: Insert reviews (reviewer = owner, reviewee = assigned user)
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
@@ -1139,5 +1138,3 @@ INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timest
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
 (72, 23, 57, 2, 'Setup went okay, but now my printer seems to have a mind of its own. A bit spooky.', '2026-06-25 17:00:00');
 
-INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(80, 5, 42, 5, 'Documents delivered with a smile (or maybe that was just me). Fast and reliable!', '2026-06-22 11:00:00');
