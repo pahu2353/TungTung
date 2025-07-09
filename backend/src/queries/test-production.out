@@ -18,4 +18,3 @@ listid	listing_name	description	capacity	price	duration	address	longitude	latitu
 1	Backyard Gardening Assistance	I need help trimming hedges and de-weeding.	1	25.00	120	123 Maple St, Toronto, ON, Canada	-79.383200	43.653200	2025-07-08 23:58:44	2026-06-18 08:00:00	taken
 15	Garden Watering	Away next week, need watering service.	1	30.00	30	345 Maple Rd, Vancouver, BC, Canada	-123.120700	49.282700	2025-07-08 23:58:44	2026-06-24 08:00:00	open
 47	Lawn Mowing	Mow front and backyard.	1	35.00	60	56 Maple St, Vancouver, BC, Canada	-123.120700	49.282700	2025-07-08 23:58:44	2026-06-22 11:00:00	open
-ERROR 1054 (42S22) at line 19: Unknown column 'Listing.status' in 'where clause'
