@@ -17,10 +17,12 @@ import java.util.stream.Collectors;
 public class Seed {
   private final JdbcTemplate jdbc;
   private Faker faker;
+  private int postingVolume;
 
   public Seed(JdbcTemplate jdbc) {
     this.jdbc = jdbc;
     this.faker = new Faker();
+    this.postingVolume = 0;
   }
 
   public void populate() {
@@ -28,6 +30,8 @@ public class Seed {
     this.createAccounts();
     this.createCategories();
     this.createListings();
+    this.createListingAssignments();
+    this.updateListings();
     this.createReviews();
   }
 
@@ -125,6 +129,8 @@ public class Seed {
     String categoryListSql = "INSERT INTO BelongsTo Values(?, ?)";
     this.jdbc.batchUpdate(postsSql, listingPosts);
     this.jdbc.batchUpdate(categoryListSql, categoryListings);
+
+    this.postingVolume = postingId - 1;
   }
 
   public void createCategories() {
@@ -144,5 +150,52 @@ public class Seed {
 
   public void createReviews() {
 
+  }
+
+  public void createListingAssignments() {
+    Random rnd = new Random();
+    List<Object[]> listAssigns = new ArrayList<>();
+
+    int p = 0;
+    
+    for (int i = 1; i <= 50; i++) {
+      int isDriver = rnd.nextInt(1);
+      if (isDriver != 1) {
+        continue;
+      }
+      List<Integer> pool = new ArrayList<>();
+      for (int j = 1; j <= this.postingVolume; j++) pool.add(i);
+      Collections.shuffle(pool, rnd);
+      listAssigns.add(new Object[] {pool.get(p), i});
+      p++;
+    }
+
+    String sql = "INSERT INTO AssignedTo VALUES(?, ?)";
+    this.jdbc.batchUpdate(sql, listAssigns);
+  }
+
+  public void updateListings() {
+    Random rnd = new Random();
+    String[] STATUSES = {
+      "open",
+      "taken",
+      "completed",
+      "cancelled"
+    };
+    List<Object[]> listUpdates = new ArrayList<>();
+    for (int i = 1; i <= this.postingVolume; i++) {
+      int index = rnd.nextInt(3);
+      if (index == 0) continue;
+      String status = STATUSES[index];
+      listUpdates.add(new Object[]{status, i});
+    }
+
+    String sql = """
+        Update Listings
+        SET status = ?
+        WHERE listid = ?
+        """;
+
+    this.jdbc.batchUpdate(sql, listUpdates);
   }
 }
