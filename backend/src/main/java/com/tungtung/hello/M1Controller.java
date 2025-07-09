@@ -92,8 +92,8 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            if (email == null || email.trim().isEmpty()) {
-                response.put("error", "Email is required");
+            if ((email == null || email.isEmpty()) && (phoneNumber == null || phoneNumber.isEmpty())) {
+                response.put("error", "Either email or phone number is required");
                 return ResponseEntity.badRequest().body(response);
             }
 
