@@ -68,15 +68,22 @@ export default function Home() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    if (selectedCategories.length === 0) return;
+  const toggleCategory = async (categoryName: string) => {
+    const updated = selectedCategories.includes(categoryName)
+      ? selectedCategories.filter((c) => c !== categoryName)
+      : [...selectedCategories, categoryName];
 
-    const fetchFilteredListings = async () => {
-      setLoading(true);
+    setSelectedCategories(updated);
+
+    if (updated.length === 0) {
+      await handleGetListings(); // Reset to all listings
+    } else {
+      // Manually fetch filtered listings
       const params = new URLSearchParams();
-      selectedCategories.forEach((cat) => params.append("categories", cat));
+      updated.forEach((cat) => params.append("categories", cat));
 
       try {
+        setLoading(true);
         const response = await fetch(`http://localhost:8080/listings/filter?${params.toString()}`);
         const data = await response.json();
         setListings(data);
@@ -86,17 +93,7 @@ export default function Home() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchFilteredListings();
-  }, [selectedCategories]);
-
-    const toggleCategory = (categoryName: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryName)
-        ? prev.filter((c) => c !== categoryName)
-        : [...prev, categoryName]
-    );
+    }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
