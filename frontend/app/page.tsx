@@ -13,8 +13,10 @@ export default function Home() {
   }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
+    // Auth state
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -65,6 +67,37 @@ export default function Home() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (selectedCategories.length === 0) return;
+
+    const fetchFilteredListings = async () => {
+      setLoading(true);
+      const params = new URLSearchParams();
+      selectedCategories.forEach((cat) => params.append("categories", cat));
+
+      try {
+        const response = await fetch(`http://localhost:8080/listings/filter?${params.toString()}`);
+        const data = await response.json();
+        setListings(data);
+      } catch (error) {
+        console.error("Error fetching filtered listings:", error);
+        setMessage("Error connecting to backend");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFilteredListings();
+  }, [selectedCategories]);
+
+    const toggleCategory = (categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((c) => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -374,16 +407,40 @@ export default function Home() {
               Browse by category (under construction!):
             </h3>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-              {taskCategories.map((category, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+              {taskCategories.map((category, index) => {
+                const isSelected = selectedCategories.includes(category.category_name);
+
+                return (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setSelectedCategories(prev =>
+                        isSelected
+                          ? prev.filter(c => c !== category.category_name)
+                          : [...prev, category.category_name]
+                      );
+                    }}
+                    className={`flex-shrink-0 px-4 py-2 rounded-full border cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-blue-500 text-white border-blue-600'
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <span className="text-sm font-medium whitespace-nowrap">{category.category_name}</span>
+                  </div>
+                );
+              })}
+              {selectedCategories.length > 0 && (
+                <button
+                  onClick={async () => {
+                    setSelectedCategories([]);
+                    await handleGetListings(); // show all listings again
+                  }}
+                  className="mt-2 px-3 py-1 text-sm bg-gray-300 rounded hover:bg-gray-400"
                 >
-                  <span className="text-sm font-medium whitespace-nowrap">
-                    {category.category_name}
-                  </span>
-                </div>
-              ))}
+                  Clear Category Filters
+                </button>
+              )}
             </div>
           </div>
         )}
