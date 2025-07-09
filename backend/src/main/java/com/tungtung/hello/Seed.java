@@ -2,10 +2,15 @@ package com.tungtung.hello;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -18,11 +23,17 @@ public class Seed {
   private final JdbcTemplate jdbc;
   private Faker faker;
   private int postingVolume;
+  private Set<Integer> completedTasks;
+  private List<Integer> listToAuthor;
+  private Map<Integer,Integer> listingToUser;
 
   public Seed(JdbcTemplate jdbc) {
     this.jdbc = jdbc;
     this.faker = new Faker();
     this.postingVolume = 0;
+    this.completedTasks = new HashSet<>();
+    this.listToAuthor = new ArrayList<>();
+    this.listingToUser = new HashMap<>();
   }
 
   public void populate() {
@@ -110,6 +121,7 @@ public class Seed {
         );
 
         listingPosts.add(new Object[] {postingId, id});
+        this.listToAuthor.add(id);
 
         // pick categories for each posting
         int categories = rnd.nextInt(4);  // 0–3 distinct picks
@@ -149,7 +161,20 @@ public class Seed {
   }
 
   public void createReviews() {
+    // user must be assigned
+    // listing must be completed
+    Random rnd = new Random();
+    String sql = "INSERT INTO Reviews VALUES(?, ?, ?, ?, ?)";
+    for (int listing = 1; listing <= postingVolume; listing++) {
+      if (this.listingToUser.containsKey(listing) && this.completedTasks.contains(listing)) {
+        int reviewer = listingToUser.get(listing);
+        int reviewee = this.listToAuthor.get(listing - 1);
+        int rating = rnd.nextInt(5) + 1;
+        String comment = this.faker.yoda().quote();
 
+        this.jdbc.update(sql, listing, reviewer, reviewee, rating, comment);
+      }
+    }
   }
 
   public void createListingAssignments() {
@@ -159,14 +184,16 @@ public class Seed {
     int p = 0;
     
     for (int i = 1; i <= 50; i++) {
-      int isDriver = rnd.nextInt(1);
+      int isDriver = rnd.nextInt(2);
       if (isDriver != 1) {
         continue;
       }
       List<Integer> pool = new ArrayList<>();
-      for (int j = 1; j <= this.postingVolume; j++) pool.add(i);
+      for (int j = 1; j <= this.postingVolume; j++) pool.add(j);
       Collections.shuffle(pool, rnd);
-      listAssigns.add(new Object[] {pool.get(p), i});
+      int picked = pool.get(p);
+      this.listingToUser.put(picked, i);
+      listAssigns.add(new Object[] {picked, i});
       p++;
     }
 
@@ -186,6 +213,9 @@ public class Seed {
     for (int i = 1; i <= this.postingVolume; i++) {
       int index = rnd.nextInt(3);
       if (index == 0) continue;
+      if (index == 2) {
+        this.completedTasks.add(i);
+      }
       String status = STATUSES[index];
       listUpdates.add(new Object[]{status, i});
     }
