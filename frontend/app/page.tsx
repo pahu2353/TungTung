@@ -8,25 +8,28 @@ export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
   const [expandedListing, setExpandedListing] = useState<number | null>(null);
-  const [listingReviews, setListingReviews] = useState<{[key: number]: any[]}>({});
+  const [listingReviews, setListingReviews] = useState<{
+    [key: number]: any[];
+  }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [userNames, setUserNames] = useState<{[key: number]: string}>({});
+  const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
   // Auth state
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
-  const [authForm, setAuthForm] = useState({ 
-    name: "", 
-    email: "", 
-    phone_number: "", 
-    password: ""
+  const [authForm, setAuthForm] = useState({
+    name: "",
+    email: "",
+    phone_number: "",
+    contact: "", // Single field for login
+    password: "",
   });
 
   // Check for existing user on page load
   useEffect(() => {
-    const savedUser = localStorage.getItem('tungTungUser');
+    const savedUser = localStorage.getItem("tungTungUser");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
@@ -58,49 +61,59 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([
-        handleGetTaskCategories(),
-        handleGetListings()
-      ]);
+      await Promise.all([handleGetTaskCategories(), handleGetListings()]);
       setLoading(false);
     };
-    
+
     loadData();
   }, []);
 
   // Auth functions
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      const endpoint = isSignup ? '/signup' : '/login';
-      const body = isSignup 
-        ? { name: authForm.name, email: authForm.email, password: authForm.password, phone_number: authForm.phone_number }
-        : { email: authForm.email, password: authForm.password };
-      
+      const endpoint = isSignup ? "/signup" : "/login";
+
+      let body;
+      if (isSignup) {
+        body = {
+          name: authForm.name,
+          email: authForm.email,
+          password: authForm.password,
+          phone_number: authForm.phone_number,
+        };
+      } else {
+        body = {
+          email: authForm.contact,
+          phone_number: authForm.contact,
+          password: authForm.password,
+        };
+      }
+
       const response = await fetch(`http://localhost:8080${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
-        localStorage.setItem('tungTungUser', JSON.stringify(data));
+        localStorage.setItem("tungTungUser", JSON.stringify(data));
         setUser(data);
         setShowAuthModal(false);
-        setAuthForm({ name: "", email: "", phone_number: "", password: "" });
+        setAuthForm({ name: "", email: "", phone_number: "", contact: "", password: "" });
       } else {
-        alert(data.error || 'Authentication failed');
+        alert(data.error || "Authentication failed");
       }
     } catch (error) {
-      alert('Network error');
+      alert("Network error");
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('tungTungUser');
+    localStorage.removeItem("tungTungUser");
     setUser(null);
   };
 
@@ -113,9 +126,9 @@ export default function Home() {
     try {
       const response = await fetch(`http://localhost:8080/users/${uid}/name`);
       const name = await response.text();
-      setUserNames(prev => ({
+      setUserNames((prev) => ({
         ...prev,
-        [uid]: name
+        [uid]: name,
       }));
       return name;
     } catch (error) {
@@ -131,13 +144,15 @@ export default function Home() {
     }
 
     setExpandedListing(listingId);
-    
+
     // Fetch reviews for this listing if not already loaded
     if (!listingReviews[listingId]) {
       try {
-        const response = await fetch(`http://localhost:8080/listings/${listingId}/reviews`);
+        const response = await fetch(
+          `http://localhost:8080/listings/${listingId}/reviews`
+        );
         const reviews = await response.json();
-        
+
         // Fetch names for all reviewer and reviewee UIDs in the reviews
         const uniqueUIDs = new Set();
         interface Review {
@@ -155,12 +170,14 @@ export default function Home() {
         });
 
         // Fetch names for all unique UIDs
-        const namePromises = Array.from(uniqueUIDs).map(uid => fetchUserName(uid));
+        const namePromises = Array.from(uniqueUIDs).map((uid) =>
+          fetchUserName(uid)
+        );
         await Promise.all(namePromises);
-        
-        setListingReviews(prev => ({
+
+        setListingReviews((prev) => ({
           ...prev,
-          [listingId]: reviews
+          [listingId]: reviews,
         }));
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -169,7 +186,7 @@ export default function Home() {
   };
 
   // Filter listings based on status
-  const filteredListings = listings.filter(listing => {
+  const filteredListings = listings.filter((listing) => {
     if (statusFilter === "all") return true;
     return listing.status === statusFilter;
   });
@@ -191,7 +208,6 @@ export default function Home() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-      
         <div className="text-center sm:text-left">
           <div className="flex justify-between items-center w-full max-w-4xl">
             <div>
@@ -200,7 +216,7 @@ export default function Home() {
                 Get what you need done.
               </p>
             </div>
-            
+
             {/* Auth section */}
             <div className="flex items-center gap-4">
               {user ? (
@@ -234,25 +250,52 @@ export default function Home() {
               </h2>
               
               <form onSubmit={handleAuth}>
-                {isSignup && (
-                  <input
-                    type="text"
-                    placeholder="Name"
-                    value={authForm.name}
-                    onChange={(e) => setAuthForm({...authForm, name: e.target.value})}
-                    className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
-                    required
-                  />
+                {isSignup ? (
+                  // Signup 
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      value={authForm.name}
+                      onChange={(e) => setAuthForm({...authForm, name: e.target.value})}
+                      className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                      required
+                    />
+                    
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={authForm.email}
+                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+                      className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                      required
+                    />
+                    
+                    <input
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={authForm.phone_number}
+                      onChange={(e) => setAuthForm({...authForm, phone_number: e.target.value})}
+                      className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                    />
+                    
+                    <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
+                      To signup, you need to enter either your email, phone number, or both. You can sign in later using either!
+                    </p>
+                  </>
+                ) : (
+                  // Login form
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Email or Phone Number"
+                      value={authForm.contact}
+                      onChange={(e) => setAuthForm({...authForm, contact: e.target.value})}
+                      className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                      required
+                    />
+                  </>
                 )}
-                
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={authForm.email}
-                  onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
-                  className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
-                  required
-                />
                 
                 <input
                   type="password"
@@ -262,16 +305,6 @@ export default function Home() {
                   className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
                   required
                 />
-                
-                {isSignup && (
-                  <input
-                    type="tel"
-                    placeholder="Phone Number (optional)"
-                    value={authForm.phone_number}
-                    onChange={(e) => setAuthForm({...authForm, phone_number: e.target.value})}
-                    className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
-                  />
-                )}
                 
                 <div className="flex gap-2">
                   <button
@@ -294,7 +327,7 @@ export default function Home() {
                 {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
                 <button
                   onClick={() => setIsSignup(!isSignup)}
-                  className="text-blue-500 hover:underline"
+                  className="text-blue-5 hover:underline"
                 >
                   {isSignup ? 'Login' : 'Sign Up'}
                 </button>
@@ -310,25 +343,21 @@ export default function Home() {
           </div>
         )}
 
-        {/* Display message from hello endpoint */}
-        {message && (
-          <div className="p-4 rounded-lg bg-gray-100 dark:bg-gray-800 w-full max-w-md">
-            <h3 className="font-semibold mb-2">Response:</h3>
-            <p className="text-sm">{message}</p>
-          </div>
-        )}
-
         {/* Horizontal scrolling task categories */}
         {taskCategories.length > 0 && (
           <div className="w-full max-w-4xl">
-            <h3 className="font-semibold mb-4">Browse by category (under construction!):</h3>
+            <h3 className="font-semibold mb-4">
+              Browse by category (under construction!):
+            </h3>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
               {taskCategories.map((category, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors"
                 >
-                  <span className="text-sm font-medium whitespace-nowrap">{category.category_name}</span>
+                  <span className="text-sm font-medium whitespace-nowrap">
+                    {category.category_name}
+                  </span>
                 </div>
               ))}
             </div>
@@ -340,7 +369,7 @@ export default function Home() {
           <div className="p-4 rounded-lg bg-gray-100 dark:bg-gray-800 w-full max-w-4xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold">Listings:</h3>
-              
+
               {/* Status Filter Dropdown */}
               <div className="flex items-center gap-2">
                 <label htmlFor="status-filter" className="text-sm font-medium">
@@ -353,43 +382,73 @@ export default function Home() {
                   className="px-3 py-1 border rounded-md bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-sm"
                 >
                   <option value="all">All ({listings.length})</option>
-                  <option value="open">Open ({listings.filter(l => l.status === "open").length})</option>
-                  <option value="taken">Taken ({listings.filter(l => l.status === "taken").length})</option>
-                  <option value="completed">Completed ({listings.filter(l => l.status === "completed").length})</option>
+                  <option value="open">
+                    Open ({listings.filter((l) => l.status === "open").length})
+                  </option>
+                  <option value="taken">
+                    Taken ({listings.filter((l) => l.status === "taken").length}
+                    )
+                  </option>
+                  <option value="completed">
+                    Completed (
+                    {listings.filter((l) => l.status === "completed").length})
+                  </option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-4">
               {filteredListings.map((listing, index) => (
-                <div key={index} className="bg-white dark:bg-gray-700 rounded-lg border overflow-hidden">
+                <div
+                  key={index}
+                  className="bg-white dark:bg-gray-700 rounded-lg border overflow-hidden"
+                >
                   {/* Listing Header - Clickable */}
-                  <div 
+                  <div
                     className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     onClick={() => handleExpandListing(listing.listid)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold text-lg">{listing.listing_name}</h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(listing.status)}`}>
+                          <h4 className="font-semibold text-lg">
+                            {listing.listing_name}
+                          </h4>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
+                              listing.status
+                            )}`}
+                          >
                             {listing.status.toUpperCase()}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{listing.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                          {listing.description}
+                        </p>
                         <div className="flex gap-4 text-sm">
-                          <span><strong>Price:</strong> ${listing.price}</span>
-                          <span><strong>Duration:</strong> {listing.duration} min</span>
-                          <span><strong>People Needed:</strong> {listing.capacity}</span>
+                          <span>
+                            <strong>Price:</strong> ${listing.price}
+                          </span>
+                          <span>
+                            <strong>Duration:</strong> {listing.duration} min
+                          </span>
+                          <span>
+                            <strong>People Needed:</strong> {listing.capacity}
+                          </span>
                         </div>
                         <div className="flex gap-4 text-sm mt-1">
-                          <span><strong>Address:</strong> {listing.address}</span>
-                          <span><strong>Deadline:</strong> {new Date(listing.deadline).toLocaleString()}</span>
+                          <span>
+                            <strong>Address:</strong> {listing.address}
+                          </span>
+                          <span>
+                            <strong>Deadline:</strong>{" "}
+                            {new Date(listing.deadline).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                       <div className="ml-4">
                         <span className="text-2xl">
-                          {expandedListing === listing.listid ? '▼' : '▶'}
+                          {expandedListing === listing.listid ? "▼" : "▶"}
                         </span>
                       </div>
                     </div>
@@ -400,30 +459,57 @@ export default function Home() {
                     <div className="border-t bg-gray-50 dark:bg-gray-800">
                       <div className="p-4">
                         <h5 className="font-semibold mb-3">Review:</h5>
-                        {listingReviews[listing.listid] && listingReviews[listing.listid].length > 0 ? (
+                        {listingReviews[listing.listid] &&
+                        listingReviews[listing.listid].length > 0 ? (
                           <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {listingReviews[listing.listid].map((review, reviewIndex) => (
-                              <div key={reviewIndex} className="p-3 bg-white dark:bg-gray-700 rounded border">
-                                <div className="flex justify-between items-start mb-2">
-                                  {review.rating && (
-                                    <span className="text-yellow-500">
-                                      {'★'.repeat(review.rating)}{'☆'.repeat(5-review.rating)}
-                                    </span>
+                            {listingReviews[listing.listid].map(
+                              (review, reviewIndex) => (
+                                <div
+                                  key={reviewIndex}
+                                  className="p-3 bg-white dark:bg-gray-700 rounded border"
+                                >
+                                  <div className="flex justify-between items-start mb-2">
+                                    {review.rating && (
+                                      <span className="text-yellow-500">
+                                        {"★".repeat(review.rating)}
+                                        {"☆".repeat(5 - review.rating)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {review.comment && (
+                                    <p className="text-sm mb-2">
+                                      {review.comment}
+                                    </p>
                                   )}
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    <span>
+                                      Reviewed By:{" "}
+                                      {userNames[review.reviewer_uid] ||
+                                        `User ${review.reviewer_uid}`}
+                                    </span>
+                                    <span className="ml-4">
+                                      Fulfilled By:{" "}
+                                      {userNames[review.reviewee_uid] ||
+                                        `User ${review.reviewee_uid}`}
+                                    </span>
+                                    {review.timestamp && (
+                                      <span className="ml-4">
+                                        Date: {review.timestamp}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                {review.comment && <p className="text-sm mb-2">{review.comment}</p>}
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  <span>Reviewed By: {userNames[review.reviewer_uid] || `User ${review.reviewer_uid}`}</span>
-                                  <span className="ml-4">Fulfilled By: {userNames[review.reviewee_uid] || `User ${review.reviewee_uid}`}</span>
-                                  {review.timestamp && <span className="ml-4">Date: {review.timestamp}</span>}
-                                </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                           </div>
                         ) : listingReviews[listing.listid] ? (
-                          <p className="text-gray-500 dark:text-gray-400">No reviews yet for this listing.</p>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            No reviews yet for this listing.
+                          </p>
                         ) : (
-                          <p className="text-gray-500 dark:text-gray-400">Loading reviews...</p>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Loading reviews...
+                          </p>
                         )}
                       </div>
                     </div>
@@ -443,7 +529,9 @@ export default function Home() {
         {/* Show placeholder when no data is loaded and not loading */}
         {!loading && listings.length === 0 && taskCategories.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">No data available. Check your backend connection.</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              No data available. Check your backend connection.
+            </p>
           </div>
         )}
       </main>
