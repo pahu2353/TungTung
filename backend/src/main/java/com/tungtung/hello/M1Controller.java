@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 // Allow CORS
@@ -44,6 +45,32 @@ public class M1Controller {
     // See all the listings
     public List<Map<String, Object>> ListListings() {
         return jdbc.queryForList("SELECT * FROM Listings");
+    }
+
+    @GetMapping("/listings/filter")
+    // See filtered listings by selected categories
+    public List<Map<String, Object>> filterListings(
+        @RequestParam List<String> categories
+    ) {
+        if (categories == null || categories.isEmpty()) {
+            return jdbc.queryForList("SELECT * FROM Listings");
+        }
+
+        String placeholders = String.join(",", categories.stream().map(c -> "?").toList());
+
+        String sql =
+            "SELECT DISTINCT L.* " +
+            "FROM Listings L " +
+            "JOIN BelongsTo B ON L.listid = B.listid " +
+            "JOIN TaskCategories T ON B.category_id = T.category_id " +
+            "WHERE T.category_name IN (" + placeholders + ")" + 
+            "GROUP BY L.listid " +
+            "HAVING COUNT(DISTINCT T.category_name) = ?";
+            
+        List<Object> params = new java.util.ArrayList<>(categories);
+        params.add(categories.size()); // append the count for HAVING
+
+        return jdbc.queryForList(sql, params.toArray());
     }
 
     // Get review for listing

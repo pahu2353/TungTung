@@ -13,8 +13,10 @@ export default function Home() {
   }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
+    // Auth state
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -65,6 +67,34 @@ export default function Home() {
 
     loadData();
   }, []);
+
+  const toggleCategory = async (categoryName: string) => {
+    const updated = selectedCategories.includes(categoryName)
+      ? selectedCategories.filter((c) => c !== categoryName)
+      : [...selectedCategories, categoryName];
+
+    setSelectedCategories(updated);
+
+    if (updated.length === 0) {
+      await handleGetListings(); // Reset to all listings
+    } else {
+      // Manually fetch filtered listings
+      const params = new URLSearchParams();
+      updated.forEach((cat) => params.append("categories", cat));
+
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:8080/listings/filter?${params.toString()}`);
+        const data = await response.json();
+        setListings(data);
+      } catch (error) {
+        console.error("Error fetching filtered listings:", error);
+        setMessage("Error connecting to backend");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,19 +401,37 @@ export default function Home() {
         {taskCategories.length > 0 && (
           <div className="w-full max-w-4xl">
             <h3 className="font-semibold mb-4">
-              Browse by category (under construction!):
+              Browse by category:
             </h3>
-            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-              {taskCategories.map((category, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+            <div className="flex flex-wrap gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+              {taskCategories.map((category, index) => {
+                const isSelected = selectedCategories.includes(category.category_name);
+
+                return (
+                  <div
+                    key={index}
+                    onClick={() => toggleCategory(category.category_name)}
+                    className={`flex-shrink-0 h-10 px-4 flex items-center rounded-full border cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-blue-500 text-white border-blue-600'
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <span className="text-sm font-medium whitespace-nowrap">{category.category_name}</span>
+                  </div>
+                );
+              })}
+              {selectedCategories.length > 0 && (
+                <button
+                  onClick={async () => {
+                    setSelectedCategories([]);
+                    await handleGetListings(); // show all listings again
+                  }}
+                  className="h-10 px-4 flex items-center text-sm bg-gray-300 rounded-full hover:bg-gray-400 text-gray-800 border border-gray-300"
                 >
-                  <span className="text-sm font-medium whitespace-nowrap">
-                    {category.category_name}
-                  </span>
-                </div>
-              ))}
+                  Clear Category Filters
+                </button>
+              )}
             </div>
           </div>
         )}
