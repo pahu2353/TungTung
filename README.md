@@ -1,4 +1,4 @@
-# Welcome to `TungTung` (formerly `spootify`)
+# Welcome to `TungTung`
 Like Uber, but for services — use our website to make a post asking for a plumber to fix your pipes, a gardener to de-weed your garden, or a math tutor to help you with your midterm prep!
 
 ![image](https://github.com/user-attachments/assets/a7433faf-eac2-48ee-b30b-99489b020541)
@@ -40,11 +40,16 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 Lastly, run `./mvnw clean spring-boot:run` in backend. These endpoints should be accessible:
 
 ```
-localhost:8080/hello
-localhost:8080/taskcategories
-localhost:8080/listings
-localhost:8080/listings/{listingId}/reviews
-localhost:8080/accounts/{uid}/name
+GET  localhost:8080/hello
+GET  localhost:8080/taskcategories
+GET  localhost:8080/listings
+GET  localhost:8080/listings/filter?categories=<csv of category names>
+GET  localhost:8080/listings/{listingId}/reviews
+GET  localhost:8080/users/{uid}/name
+GET  localhost:8080/db/seed
+
+POST localhost:8080/signup
+POST localhost:8080/login
 ```
 
 ## Initializing Frontend
