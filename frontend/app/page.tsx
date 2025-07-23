@@ -222,11 +222,19 @@ export default function Home() {
     }
     try {
       const url = `http://localhost:8080/preferences/${user.uid}`
-      const response = await fetch(url, {
+      const post = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(onboardingCategories),
       });
+      const userData: any = JSON.parse(localStorage.getItem("tungTungUser") ?? "{}")
+      if (userData) {
+        userData.preferences = taskCategories
+          .filter(cat => onboardingCategories.includes(cat.category_id))
+          .map(cat => cat.category_name);
+      }
+      setUser(userData)
+      localStorage.setItem("tungTungUser", JSON.stringify(userData));
       setShowAuthModal(false)
       setIsOnboarding(false)
       setOnboardingCategories([])
