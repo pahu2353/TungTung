@@ -443,6 +443,7 @@ export default function Home() {
 
         <ListingsContainer
           listings={filteredListings}
+          allListings={listings} 
           statusFilter={statusFilter}
           expandedListing={expandedListing}
           listingReviews={listingReviews}
