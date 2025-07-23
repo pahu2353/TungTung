@@ -1,6 +1,7 @@
 "use client";
 
 import ListingCard from "./listing-card";
+import { useEffect, useState } from "react";
 
 export interface Listing {
   listid: number;
@@ -22,10 +23,17 @@ interface Review {
   timestamp?: string;
 }
 
+interface StatusCounts {
+  all: number;
+  open: number;
+  taken: number;
+  completed: number;
+}
+
 interface ListingsContainerProps {
   listings: Listing[];
   baseFilteredListings: Listing[];
-  allListings?: Listing[]; // Add this new prop
+  allListings?: Listing[];
   statusFilter: string;
   expandedListing: number | null;
   listingReviews: { [key: number]: Review[] };
@@ -41,7 +49,7 @@ interface ListingsContainerProps {
 export default function ListingsContainer({
   listings,
   baseFilteredListings,
-  allListings, // Accept the new prop
+  allListings,
   statusFilter,
   expandedListing,
   listingReviews,
@@ -52,7 +60,22 @@ export default function ListingsContainer({
   user,
   onUpdateListing,
 }: ListingsContainerProps) {
-  const listingsForCounts = allListings || listings;
+  const [statusCounts, setStatusCounts] = useState<StatusCounts>({
+    all: 0,
+    open: 0,
+    taken: 0,
+    completed: 0,
+  });
+
+  useEffect(() => {
+    // Counts from baseFilteredListings (which has search and category filters applied but no status filter)
+    const all = baseFilteredListings.length;
+    const open = baseFilteredListings.filter((l) => l.status === "open").length;
+    const taken = baseFilteredListings.filter((l) => l.status === "taken").length;
+    const completed = baseFilteredListings.filter((l) => l.status === "completed").length;
+
+    setStatusCounts({ all, open, taken, completed });
+  }, [baseFilteredListings]);
 
   const filteredListings = listings; // listings from props = already category + search filtered
   const finalListings = filteredListings.filter((listing) => {
@@ -67,7 +90,6 @@ export default function ListingsContainer({
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <h3 className="font-semibold">Listings:</h3>
 
-        {/* Status Filter Dropdown - Use listingsForCounts for accurate counts */}
         <div className="flex items-center gap-2">
           <label htmlFor="status-filter" className="text-sm font-medium">
             Filter by status:
@@ -78,16 +100,10 @@ export default function ListingsContainer({
             onChange={(e) => onStatusFilterChange(e.target.value)}
             className="px-3 py-1 border rounded-md bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-sm"
           >
-            <option value="all">All ({listingsForCounts.length})</option>
-            <option value="open">
-              Open ({baseFilteredListings.filter((l) => l.status === "open").length})
-            </option>
-            <option value="taken">
-              Taken ({baseFilteredListings.filter((l) => l.status === "taken").length})
-            </option>
-            <option value="completed">
-              Completed ({baseFilteredListings.filter((l) => l.status === "completed").length})
-            </option>
+            <option value="all">All ({statusCounts.all})</option>
+            <option value="open">Open ({statusCounts.open})</option>
+            <option value="taken">Taken ({statusCounts.taken})</option>
+            <option value="completed">Completed ({statusCounts.completed})</option>
           </select>
         </div>
 

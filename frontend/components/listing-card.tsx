@@ -48,6 +48,8 @@ export default function ListingCard({
 }: ListingCardProps) {
   const [isAssigned, setIsAssigned] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<{ uid: number; name: string; profile_picture: string }[]>([]);
+  const [poster, setPoster] = useState<{ uid: number; name: string; profile_picture: string } | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -93,21 +95,48 @@ export default function ListingCard({
     checkAssigned();
   }, [user, listing.listid, listing.status]); // Re-check if listing changes
 
-    // Fetch assigned users with name and profile picture when expanded
-    useEffect(() => {
-      const fetchAssignedUsers = async () => {
-        if (!isExpanded) return;
-        try {
-          const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
-          const data = await res.json();
-          // Expect data: [{ uid, name, profile_picture }]
-          setAssignedUsers(Array.isArray(data) ? data : []);
-        } catch (err) {
-          setAssignedUsers([]);
-        }
-      };
-      fetchAssignedUsers();
-    }, [isExpanded, listing.listid]);
+  useEffect(() => {
+    const fetchPoster = async () => {
+      if (!isExpanded) return;
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/poster`);
+        const data = await res.json();
+        setPoster(data);
+      } catch (err) {
+        setPoster(null);
+      }
+    };
+    fetchPoster();
+}, [isExpanded, listing.listid]);
+
+  // Fetch assigned users with name and profile picture when expanded
+  useEffect(() => {
+    const fetchAssignedUsers = async () => {
+      if (!isExpanded) return;
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const data = await res.json();
+        // Expect data: [{ uid, name, profile_picture }]
+        setAssignedUsers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setAssignedUsers([]);
+      }
+    };
+    fetchAssignedUsers();
+  }, [isExpanded, listing.listid]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/categories`);
+        const data = await res.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, [listing.listid]);
 
   const handleToggleAssignment = async () => {
     if (!user) return;
@@ -243,7 +272,19 @@ export default function ListingCard({
                 <strong>Deadline:</strong>{" "}
                 {new Date(listing.deadline).toLocaleString()}
               </span>
-            </div>
+            </div>      
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {categories.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 rounded-full border border-gray-300 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="ml-4">
             <span className="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
@@ -256,39 +297,82 @@ export default function ListingCard({
       {isExpanded && (
         <div className="border-t bg-gray-50 dark:bg-gray-800">
           <div className="p-4 space-y-4">
-            {/* Assigned Users Horizontal List */}
-            <div>
-              <h5 className="font-semibold mb-2">Assigned Users:</h5>
-              <ScrollArea className="w-full">
-                <div className="flex gap-4 overflow-x-auto pb-2">
-                  {assignedUsers.length === 0 ? (
-                    <span className="text-gray-500 text-sm">No users assigned yet.</span>
+            {/* Poster and Assigned Users Row */}
+            <div className="flex flex-row justify-between gap-8">
+              {/* Posted By */}
+              <div className="flex flex-col items-start">
+                <h5 className="font-semibold mb-2">Posted By</h5>
+                <div className="flex gap-4">
+                  {poster ? (
+                    <div className="flex flex-col items-center min-w-[80px]">
+                      <Link href={`/profile?uid=${poster.uid}`}>
+                        <Avatar className="mt-2 w-12 h-12 cursor-pointer hover:ring-2 hover:ring-blue-400 transition">
+                          <AvatarImage src={poster.profile_picture || "https://placecats.com/300/300"} />
+                          <AvatarFallback>
+                            {poster.name
+                              ? poster.name.split(" ").map((n) => n[0]).join("")
+                              : "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Link>
+                      <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
+                        {(() => {
+                          const { firstName, lastName } = splitName(poster.name || '');
+                          return (
+                            <>
+                              <div className="font-medium">{firstName}</div>
+                              {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   ) : (
-                    assignedUsers.map((assigned) => {
-                      const { firstName, lastName } = splitName(assigned.name || '');
-                      return (
-                        <div key={assigned.uid} className="flex flex-col items-center min-w-[80px]">
-                          <Link href={`/profile?uid=${assigned.uid}`}>
-                            <Avatar className="w-12 h-12">
-                              <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
-                              <AvatarFallback>
-                                {assigned.name
-                                  ? assigned.name.split(" ").map((n) => n[0]).join("")
-                                  : "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                          </Link>  
-                          <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
-                            <div className="font-medium">{firstName}</div>
-                            {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
-                          </div>
-                        </div>
-                      );
-                    })
+                    <div className="flex flex-col items-center min-w-[80px]">
+                      <div className="mt-2 w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-full animate-pulse"></div>
+                      <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
+                        <span className="text-gray-500 text-sm">Loading...</span>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
+              
+              {/* Assigned Users */}
+              <div className="flex-1 flex flex-col items-end">
+                <h5 className="font-semibold mb-2">Assigned Users</h5>
+                <ScrollArea className="w-full">
+                  <div className="flex gap-4 overflow-x-auto pb-2 justify-end">
+                    {assignedUsers.length === 0 ? (
+                      <span className="text-gray-500 text-sm">No users assigned yet.</span>
+                    ) : (
+                      assignedUsers.map((assigned) => {
+                        const { firstName, lastName } = splitName(assigned.name || '');
+                        return (
+                          <div key={assigned.uid} className="flex flex-col items-center min-w-[80px]">
+                            <Link href={`/profile?uid=${assigned.uid}`}>
+                              <Avatar className="mt-2 w-12 h-12 cursor-pointer hover:ring-2 hover:ring-blue-400 transition">
+                                <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
+                                <AvatarFallback>
+                                  {assigned.name
+                                    ? assigned.name.split(" ").map((n) => n[0]).join("")
+                                    : "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                            </Link>
+                            <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
+                              <div className="font-medium">{firstName}</div>
+                              {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
+            
             {/* Reviews List */}
             <h5 className="font-semibold mb-3">Reviews:</h5>
             {reviews ? (

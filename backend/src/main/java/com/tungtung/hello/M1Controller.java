@@ -75,10 +75,11 @@ public class M1Controller {
                 SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) AS distance,
                 UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW()) AS deadline_seconds,
                 -- Weighted best match score (adjust weights here)
-                (COUNT(DISTINCT II.category_id) * 10 
-                - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 5 
-                + L.price * 1 
-                - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 3600 * 3
+                (
+                    COUNT(DISTINCT II.category_id) * 75
+                    + (L.price/L.duration) * 10
+                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 60000
+                    - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 1
                 ) AS match_score,
                 CASE L.status 
                     WHEN 'open' THEN 1 
@@ -98,9 +99,9 @@ public class M1Controller {
         List<Object> params = new ArrayList<>();
         params.add(latitude);
         params.add(longitude);
-        params.add(uid);
         params.add(latitude);
         params.add(longitude);
+        params.add(uid);
 
         if (categories != null && !categories.isEmpty()) {
             sql.append(" AND T.category_name IN (")
@@ -726,6 +727,24 @@ public class M1Controller {
         }
     }
 
+    // Get poster info for a listing
+    @GetMapping("/listings/{listid}/poster")
+    public Map<String, Object> getListingPoster(@PathVariable int listid) {
+        String sql = "SELECT U.uid, U.name, U.profile_picture FROM Posts P JOIN Users U ON P.uid = U.uid WHERE P.listid = ?";
+        return jdbc.queryForMap(sql, listid);
+    }
+
+    @GetMapping("/listings/{listid}/categories")
+    public List<String> getListingCategories(@PathVariable int listid) {
+        String sql = """
+            SELECT T.category_name
+            FROM BelongsTo B
+            JOIN TaskCategories T ON B.category_id = T.category_id
+            WHERE B.listid = ?
+        """;
+        return jdbc.queryForList(sql, String.class, listid);
+    }
+
     // Create a review (after a posting is completed)
     // Triggers ensure that reviewer is the person who posted
     @PostMapping("/reviews")
@@ -798,8 +817,7 @@ public class M1Controller {
                 
                 response.put("message", "Review updated successfully");
             } else {
-                // Insert new review
-                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment) VALUES (?, ?, ?, ?, ?)";
+                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
                 jdbc.update(insertSql, listid, reviewerUid, revieweeUid, rating, comment);
                 
                 response.put("message", "Review submitted successfully");
