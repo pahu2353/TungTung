@@ -28,6 +28,7 @@ interface ListingCardProps {
   reviews: Review[] | null;
   userNames: { [key: number]: string };
   onExpand: (listingId: number) => void;
+  user: { uid: number; name: string } | null;
 }
 
 export default function ListingCard({
@@ -36,6 +37,7 @@ export default function ListingCard({
   reviews,
   userNames,
   onExpand,
+  user,
 }: ListingCardProps) {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -50,9 +52,23 @@ export default function ListingCard({
     }
   };
 
+  const handleAcceptTask = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/listings/${listing.listid}/assign/${user?.uid}`,
+        { method: "POST" }
+      );
+      const message = await response.text();
+      alert(message);
+      window.location.reload();
+    } catch (error) {
+      alert("Network error while assigning task.");
+    }
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-lg border overflow-hidden">
-      {/* Listing Header - Clickable */}
+    <div className="bg-white dark:bg-gray-700 rounded-lg border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      {/* listing header */}
       <div
         className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         onClick={() => onExpand(listing.listid)}
@@ -68,6 +84,50 @@ export default function ListingCard({
               >
                 {listing.status.toUpperCase()}
               </span>
+
+              {/* accept task button */}
+              {listing.status === "open" && user && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAcceptTask();
+                }}
+                title="Accept Task"
+                className="relative bg-[oklch(0.828_0.189_84.4)] hover:bg-[oklch(0.828_0.189_84.4/90%)] rounded-full transition-all duration-200 overflow-hidden group h-5 w-5 hover:w-24 hover:flex hover:items-center hover:justify-center hover:pr-2 ml-auto"
+                >
+                <svg
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 transition-opacity duration-200 group-hover:opacity-0"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>                
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <svg
+                    className="w-3 h-3 flex-shrink-0"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span className="ml-1 text-[10px] font-medium whitespace-nowrap text-white">
+                    Accept Task
+                  </span>
+                </div>
+              </button>
+            )}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
               {listing.description}
@@ -94,23 +154,26 @@ export default function ListingCard({
             </div>
           </div>
           <div className="ml-4">
-            <span className="text-2xl">{isExpanded ? "▼" : "▶"}</span>
+            <span className="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+              {isExpanded ? "▼" : "▶"}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Expanded Content - Reviews */}
       {isExpanded && (
         <div className="border-t bg-gray-50 dark:bg-gray-800">
-          <div className="p-4">
-            <h5 className="font-semibold mb-3">Review:</h5>
-            {reviews ? (
-              <ReviewsList reviews={reviews} userNames={userNames} />
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400">
-                Loading reviews...
-              </p>
-            )}
+          <div className="p-4 space-y-4">
+            <div>
+              <h5 className="font-semibold mb-3">Reviews:</h5>
+              {reviews ? (
+                <ReviewsList reviews={reviews} userNames={userNames} />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">
+                  Loading reviews...
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}

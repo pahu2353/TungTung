@@ -212,4 +212,44 @@ public class M1Controller {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    //assign user to listing
+    @PostMapping("/listings/{listid}/assign/{uid}")
+    public ResponseEntity<String> assignTask(@PathVariable int listid, @PathVariable int uid) {
+        try {
+            //check if listing is open
+            String statusSql = "SELECT status FROM Listings WHERE listid = ?";
+            String status = jdbc.queryForObject(statusSql, String.class, listid);
+            if (!"open".equalsIgnoreCase(status)) {
+                return ResponseEntity.badRequest().body("Listing is not open.");
+            }
+
+            //check if user is the poster
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, uid);
+            if (isPoster > 0) {
+                return ResponseEntity.badRequest().body("You cannot take your own task.");
+            }
+
+            //check if listing is full
+            String countSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ?";
+            int assigned = jdbc.queryForObject(countSql, Integer.class, listid);
+
+            String capacitySql = "SELECT capacity FROM Listings WHERE listid = ?";
+            int capacity = jdbc.queryForObject(capacitySql, Integer.class, listid);
+
+            if (assigned >= capacity) {
+                return ResponseEntity.badRequest().body("Task already full.");
+            }
+
+            //insert into AssignedTo 
+            String insertSql = "INSERT INTO AssignedTo(listid, uid) VALUES (?, ?)";
+            jdbc.update(insertSql, listid, uid);
+
+            //update Listings.status if needed
+            return ResponseEntity.ok("Successfully assigned task.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
 }
