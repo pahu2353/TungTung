@@ -119,34 +119,34 @@ export default function ProfilePage() {
     }
   ];
 
-  const reviews = [
-    {
-      id: 1,
-      listingName: "Deep House Cleaning Service",
-      reviewerName: "Michael Chen",
-      rating: 5,
-      comment: "Absolutely fantastic work! Sarah was thorough, professional, and left my apartment spotless. Highly recommend!",
-      timestamp: "2024-07-16T15:30:00Z"
-    },
-    {
-      id: 2,
-      listingName: "Emergency Plumbing Repair",
-      reviewerName: "Jennifer Park",
-      rating: 5,
-      comment: "Sarah fixed my plumbing issue quickly and efficiently. Great communication and fair pricing.",
-      timestamp: "2024-07-10T16:45:00Z"
-    },
-    {
-      id: 3,
-      listingName: "Pet Sitting - Golden Retriever",
-      reviewerName: "David Wilson",
-      rating: 4,
-      comment: "Max loved Sarah! She sent regular updates and took great care of him. Very reliable.",
-      timestamp: "2024-07-15T10:20:00Z"
-    }
-  ];
+  // const reviews = [
+  //   {
+  //     id: 1,
+  //     listingName: "Deep House Cleaning Service",
+  //     reviewerName: "Michael Chen",
+  //     rating: 5,
+  //     comment: "Absolutely fantastic work! Sarah was thorough, professional, and left my apartment spotless. Highly recommend!",
+  //     timestamp: "2024-07-16T15:30:00Z"
+  //   },
+  //   {
+  //     id: 2,
+  //     listingName: "Emergency Plumbing Repair",
+  //     reviewerName: "Jennifer Park",
+  //     rating: 5,
+  //     comment: "Sarah fixed my plumbing issue quickly and efficiently. Great communication and fair pricing.",
+  //     timestamp: "2024-07-10T16:45:00Z"
+  //   },
+  //   {
+  //     id: 3,
+  //     listingName: "Pet Sitting - Golden Retriever",
+  //     reviewerName: "David Wilson",
+  //     rating: 4,
+  //     comment: "Max loved Sarah! She sent regular updates and took great care of him. Very reliable.",
+  //     timestamp: "2024-07-15T10:20:00Z"
+  //   }
+  // ];
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800';
       case 'open': return 'bg-blue-100 text-blue-800';
@@ -157,14 +157,14 @@ export default function ProfilePage() {
     }
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
       currency: 'CAD'
     }).format(amount);
   };
 
-  const formatDuration = (minutes) => {
+  const formatDuration = (minutes: number) => {
     if (minutes >= 1440) {
       return `${Math.floor(minutes / 1440)} days`;
     } else if (minutes >= 60) {
@@ -214,8 +214,8 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     {/* hard coded overall rating for now */}
-                    <span className="font-semibold">4.7</span>
-                    <span className="text-gray-500 text-sm">({reviews.length} reviews)</span>
+                    <span className="font-semibold">{user.overall_rating ?? 0}</span>
+                    <span className="text-gray-500 text-sm">({user.reviews && user.reviews.length} reviews)</span>
                   </div>
                 </div>
               </div>
@@ -223,7 +223,7 @@ export default function ProfilePage() {
               {/* hard coded numbers for user stats at the moment */}
               <div className="flex flex-col items-end gap-2">
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(2450.75)}</p>
+                  <p className="text-2xl font-bold text-green-600">{formatCurrency(user.total_earnings ?? 0)}</p>
                   <p className="text-sm text-gray-500">Total Earned</p>
                 </div>
                 <div className="text-right">
@@ -340,7 +340,7 @@ export default function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {reviews.map((review) => (
+            {user.reviews && user.reviews.map((review: any) => (
               <div key={review.id} className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>

@@ -144,6 +144,25 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
+            // Check duplicates
+            if (email != null && !email.isEmpty()) {
+                String checkEmailSql = "SELECT COUNT(*) FROM Users WHERE email = ?";
+                int emailCount = jdbc.queryForObject(checkEmailSql, Integer.class, email);
+                if (emailCount > 0) {
+                    response.put("error", "Email is already registered");
+                    return ResponseEntity.badRequest().body(response);
+                }
+            }
+
+            if (phoneNumber != null && !phoneNumber.isEmpty()) {
+                String checkPhoneSql = "SELECT COUNT(*) FROM Users WHERE phone_number = ?";
+                int phoneCount = jdbc.queryForObject(checkPhoneSql, Integer.class, phoneNumber);
+                if (phoneCount > 0) {
+                    response.put("error", "Phone number is already registered");
+                    return ResponseEntity.badRequest().body(response);
+                }
+            }
+
             // Generate profile picture path
             int hash = Math.abs(name.hashCode());
             int catNumber = (hash % 7) + 1; // Ensure the result is between 1 and 7
@@ -167,16 +186,17 @@ public class M1Controller {
             int newUid = keyHolder.getKey().intValue();
 
             response.put("uid", newUid);
-            response.put("name", name.trim());
-            response.put("email", email.trim());
+            response.put("name", name);
+            response.put("email", email);
             response.put("phone_number", phoneNumber);
             response.put("profile_picture", profilePicture); 
+            response.put("total_earnings", 0);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            logger.error("Error during signup: {}", e.getMessage(), e); // Log the exception
-
-            response.put("error", "Either the email already exists or you have invalid data. Try again!");
+            logger.error("Error during signup: {}", e.getMessage(), e);
+            
+            response.put("error", "An error occurred during registration. Please try again.");
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -185,6 +205,12 @@ public class M1Controller {
     // so check if it's an email before we query
     private boolean isEmail(String input) {
         return input != null && input.contains("@") && input.contains(".");
+    }
+
+    private String normalizePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) return null;
+        // Removes spaces, hyphens, parentheses
+        return phoneNumber.replaceAll("[\\s\\-\\(\\)\\+]", "");
     }
 
     // Log user in
@@ -201,17 +227,19 @@ public class M1Controller {
             String password = loginData.get("password");
             String hashedPassword = Hasher.hashPassword(password);
 
-            logger.info("Parsed login data - Email: {}, Phone Number: {}, Hashed Password: {}", email, phoneNumber, hashedPassword);
-            
             // clean values to trim whitespace
-            if (email != null)
+            if (email != null) {
                 email = email.trim();
-            if (phoneNumber != null)
+            }
+            if (phoneNumber != null) {
                 phoneNumber = phoneNumber.trim();
+                phoneNumber = normalizePhoneNumber(phoneNumber);
+            }
+
+            logger.info("Parsed login data - Email: {}, Phone Number: {}, Hashed Password: {}", email, phoneNumber, hashedPassword);
 
             // Allow users to log in either with email or with phone number
-            if ((email == null || email.trim().isEmpty()) &&
-                    (phoneNumber == null || phoneNumber.trim().isEmpty())) {
+            if ((email == null || email.isEmpty()) && (phoneNumber == null || phoneNumber.isEmpty())) {
                 response.put("error", "Email or phone number is required");
                 return ResponseEntity.badRequest().body(response);
             }
@@ -226,10 +254,26 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = "SELECT * FROM Users WHERE email = ?";
+                sql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE email = ?
+                """;
                 parameter = email.trim();
             } else {
-                sql = "SELECT * FROM Users WHERE phone_number = ?";
+                sql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?
+                """;
                 parameter = phoneNumber.trim();
             }
 
@@ -241,11 +285,22 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
+            // get reviews
+            String review_sql = """
+                SELECT * FROM Reviews
+                WHERE reviewee_uid = ?
+            """;
+            
+            List<Map<String, Object>> reviews = jdbc.queryForList(review_sql, user.get("uid"));
+            user.put("reviews", reviews);
+
+
             logger.info("Login successful for user: {}", user);
 
             return ResponseEntity.ok(user);
 
         } catch (Exception e) {
+            logger.error("Login error: {}", e.getMessage(), e);
             response.put("error", "User not found");
             return ResponseEntity.badRequest().body(response);
         }
