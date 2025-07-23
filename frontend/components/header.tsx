@@ -8,38 +8,54 @@ interface User {
 }
 
 interface HeaderProps {
-  user: User | null;
+  user: any;
   onShowAuthModal: () => void;
   onLogout: () => void;
+  onShowCreateListing?: () => void;
 }
 
-export default function Header({ user, onShowAuthModal, onLogout }: HeaderProps) {
+export default function Header({ 
+  user, 
+  onShowAuthModal, 
+  onLogout,
+  onShowCreateListing 
+}: HeaderProps) {
   return (
-    <header className="w-full flex justify-between items-center mb-8">
-      <div className="text-left">
-        <h1 className="text-4xl font-bold">TungTung.</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 mt-2">
-          Get what you need done.
-        </p>
+    <header className="row-start-1 flex gap-6 flex-wrap items-center justify-between w-full">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+          T
+        </div>
+        <span className="text-xl font-bold">TungTung</span>
       </div>
       
-      <div>
+      <div className="flex items-center gap-4">
         {user ? (
-          <div className="flex items-center gap-2">
-            <span>Welcome, {user.name}!</span>
-            <button 
+          <>
+            <span className="text-sm text-gray-600">
+              Welcome, {user.name}!
+            </span>
+            {onShowCreateListing && (
+              <button
+                onClick={onShowCreateListing}
+                className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600 transition-colors"
+              >
+                + New Listing
+              </button>
+            )}
+            <button
               onClick={onLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+              className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-600 transition-colors"
             >
               Logout
             </button>
-          </div>
+          </>
         ) : (
           <button
             onClick={onShowAuthModal}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
           >
-            Login / Sign Up
+            Login/Signup
           </button>
         )}
       </div>
