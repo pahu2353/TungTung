@@ -134,6 +134,26 @@ public class M1Controller {
         return true;
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
+    @GetMapping("/preferences/{uid}")
+    public ResponseEntity<Map<String, Object>> getPreferences(@PathVariable int uid) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String sql = """
+                SELECT c.category_name
+                FROM InterestedIn i
+                NATURAL JOIN TaskCategories c
+                WHERE i.uid = ?
+            """;
+            List<Integer> preferences = jdbc.queryForList(sql, Integer.class, uid);
+
+            response.put("preferences", preferences);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "An error occurred during registration. Please try again.");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 
     // Create user's account
     @CrossOrigin(origins = "http://localhost:3000")
@@ -585,6 +605,16 @@ public class M1Controller {
             """;
             List<Map<String, Object>> assignedListings = jdbc.queryForList(assignedListingsSql, uid);
             user.put("assigned_listings", assignedListings);
+
+             String preferences_sql = """
+                SELECT c.category_name
+                FROM InterestedIn i
+                NATURAL JOIN TaskCategories c
+                WHERE i.uid = ?
+            """;
+
+            List<String> categoryNames = jdbc.queryForList(preferences_sql, String.class, uid);
+            user.put("preferences", categoryNames);
             
             return ResponseEntity.ok(user);
             

@@ -210,45 +210,63 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <Card className="border-0 shadow-lg">
           <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <Avatar className="w-24 h-24 ring-4 ring-blue-100">
-                <AvatarImage src={profileData.profile_picture} />
-                <AvatarFallback className="text-2xl font-semibold bg-blue-500 text-white">
-                  {profileData.name.split(' ').map((n: string) => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1 space-y-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{profileData.name}</h1>
+            <div className="flex flex-col space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <Avatar className="w-24 h-24 ring-4 ring-blue-100">
+                  <AvatarImage src={profileData.profile_picture} />
+                  <AvatarFallback className="text-2xl font-semibold bg-blue-500 text-white">
+                    {profileData.name.split(' ').map((n: string) => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">{profileData.name}</h1>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-sm">{profileData.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Phone className="w-4 h-4" />
+                      <span className="text-sm">{profileData.phone_number}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold">{profileData.overall_rating ?? 0}</span>
+                      <span className="text-gray-500 text-sm">({reviews.length} reviews)</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{profileData.email}</span>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-green-600">{formatCurrency(profileData.total_earnings ?? 0)}</p>
+                    <p className="text-sm text-gray-500">Total Earned</p>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Phone className="w-4 h-4" />
-                    <span className="text-sm">{profileData.phone_number}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{profileData.overall_rating ?? 0}</span>
-                    <span className="text-gray-500 text-sm">({reviews.length} reviews)</span>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-gray-900">{assignedListings.filter((l: any) => l.status === 'completed').length}</p>
+                    <p className="text-sm text-gray-500">Jobs Completed</p>
                   </div>
                 </div>
               </div>
-              
-              <div className="flex flex-col items-end gap-2">
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(profileData.total_earnings ?? 0)}</p>
-                  <p className="text-sm text-gray-500">Total Earned</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-semibold text-gray-900">{assignedListings.filter((l: any) => l.status === 'completed').length}</p>
-                  <p className="text-sm text-gray-500">Jobs Completed</p>
-                </div>
+              <div className="flex flex-wrap gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                {user.preferences && user.preferences.map((category: string, index: number) => {
+                  return (
+                    <div
+                      key={index}
+                      className={`flex-shrink-0 h-10 px-4 flex items-center rounded-full border transition-colors ${
+                        'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                      }`}
+                    >
+                      <span className="text-sm font-medium whitespace-nowrap">
+                        {category}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
