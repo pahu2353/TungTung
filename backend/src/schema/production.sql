@@ -319,7 +319,7 @@ VALUES
 (97, 'Sebastian Klein',         '/cat6.jpg', '415-927-4830', 'sebastian.klein@gmail.com',           NULL, '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
 (98, 'Karima Nasser',           '/cat7.jpg', '213-947-7283', 'karima.nasser@yahoo.com',            NULL, '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
 (99, 'Oluwaseun Adeyemi',       '/cat1.jpg', '510-927-4836', 'oluwaseun.adeyemi@hotmail.com',       NULL, '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
-(100,'Leena Sharma',            '/cat2.jpg', '415-682-7396', 'leena.sharma@gmail.com',             NULL);
+(100,'Leena Sharma',            '/cat2.jpg', '415-682-7396', 'leena.sharma@gmail.com',             NULL, '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8');
 
 -- Task Categories
 INSERT INTO TaskCategories (category_name) VALUES
