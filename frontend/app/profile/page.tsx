@@ -290,7 +290,7 @@ export default function ProfilePage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Wrench className="w-5 h-5" />
-              Services Completed
+              Assigned to You
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
