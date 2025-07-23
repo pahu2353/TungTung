@@ -99,10 +99,16 @@ function ClickableNode({
     } : { r: 1, g: 1, b: 1 };
   };
   
-  // Apply fading effect
+  // Apply fading effect to both display color and glow color
   const displayColor = isFaded ? '#666666' : node.color;
+  const glowColor = isFaded ? '#666666' : node.color; // Use same faded color for glow
+  
   const rgbColor = hexToRgb(displayColor);
   const colorVector = new THREE.Vector3(rgbColor.r, rgbColor.g, rgbColor.b);
+  
+  // Use the faded glow color for glow calculations
+  const glowRgbColor = hexToRgb(glowColor);
+  const glowColorVector = new THREE.Vector3(glowRgbColor.r, glowRgbColor.g, glowRgbColor.b);
   
   // Determine glow properties based on node type and status
   const getGlowProperties = () => {
@@ -114,7 +120,7 @@ function ClickableNode({
 
     if (isFaded) {
       return {
-        glowIntensity: baseProps.glowIntensity * 0.3,
+        glowIntensity: baseProps.glowIntensity * 0.2, // Further reduce intensity for faded nodes
         glowRadius: baseProps.glowRadius,
         outerGlowRadius: baseProps.outerGlowRadius
       };
@@ -179,50 +185,55 @@ function ClickableNode({
         />
       </mesh>
       
-      {/* Inner glow layer */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[node.size * glowProps.glowRadius, 24, 24]} />
-        <shaderMaterial
-          vertexShader={glowVertexShader}
-          fragmentShader={glowFragmentShader}
-          uniforms={{
-            glowColor: { value: colorVector },
-            glowIntensity: { value: glowProps.glowIntensity },
-            glowPower: { value: 1.5 }
-          }}
-          transparent={true}
-          blending={THREE.AdditiveBlending}
-          side={THREE.BackSide}
-        />
-      </mesh>
-      
-      {/* Outer atmospheric glow */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[node.size * glowProps.outerGlowRadius, 16, 16]} />
-        <shaderMaterial
-          vertexShader={outerGlowVertexShader}
-          fragmentShader={outerGlowFragmentShader}
-          uniforms={{
-            glowColor: { value: colorVector },
-            glowIntensity: { value: glowProps.glowIntensity * 0.6 }
-          }}
-          transparent={true}
-          blending={THREE.AdditiveBlending}
-          side={THREE.BackSide}
-        />
-      </mesh>
-      
-      {/* Additional soft glow for open listings */}
-      {node.type === 'listing' && node.data.status === 'open' && !isFaded && (
-        <mesh position={[0, 0, 0]}>
-          <sphereGeometry args={[node.size * 4, 12, 12]} />
-          <meshBasicMaterial 
-            color={node.color}
-            transparent
-            opacity={glowProps.glowIntensity * 0.08}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
+      {/* Only render glow if not faded */}
+      {!isFaded && (
+        <>
+          {/* Inner glow layer */}
+          <mesh position={[0, 0, 0]}>
+            <sphereGeometry args={[node.size * glowProps.glowRadius, 24, 24]} />
+            <shaderMaterial
+              vertexShader={glowVertexShader}
+              fragmentShader={glowFragmentShader}
+              uniforms={{
+                glowColor: { value: glowColorVector },
+                glowIntensity: { value: glowProps.glowIntensity },
+                glowPower: { value: 1.5 }
+              }}
+              transparent={true}
+              blending={THREE.AdditiveBlending}
+              side={THREE.BackSide}
+            />
+          </mesh>
+          
+          {/* Outer atmospheric glow */}
+          <mesh position={[0, 0, 0]}>
+            <sphereGeometry args={[node.size * glowProps.outerGlowRadius, 16, 16]} />
+            <shaderMaterial
+              vertexShader={outerGlowVertexShader}
+              fragmentShader={outerGlowFragmentShader}
+              uniforms={{
+                glowColor: { value: glowColorVector },
+                glowIntensity: { value: glowProps.glowIntensity * 0.6 }
+              }}
+              transparent={true}
+              blending={THREE.AdditiveBlending}
+              side={THREE.BackSide}
+            />
+          </mesh>
+          
+          {/* Additional soft glow for open listings */}
+          {node.type === 'listing' && node.data.status === 'open' && (
+            <mesh position={[0, 0, 0]}>
+              <sphereGeometry args={[node.size * 4, 12, 12]} />
+              <meshBasicMaterial 
+                color={node.color}
+                transparent
+                opacity={glowProps.glowIntensity * 0.08}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+          )}
+        </>
       )}
     </group>
   );
