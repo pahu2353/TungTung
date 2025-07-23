@@ -115,7 +115,8 @@ public class M1Controller {
         try {
             String name = userData.get("name");
             String email = userData.get("email");
-            String password = userData.get("password"); // WIP
+            String password = userData.get("password");
+            String hashedPassword = Hasher.hashPassword(password);
             String phoneNumber = userData.get("phone_number");
 
             // Validate missing email, name, etc.
@@ -139,7 +140,7 @@ public class M1Controller {
             int catNumber = (hash % 7) + 1; // Ensure the result is between 1 and 7
             String profilePicture = "/cat" + catNumber + ".jpg";
 
-            String sql = "INSERT INTO Users (name, email, phone_number, profile_picture) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO Users (name, email, phone_number, profile_picture, password) VALUES (?, ?, ?, ?, ?)";
 
             // Run the query and grab the UID, storing it in keyHolder
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -150,6 +151,7 @@ public class M1Controller {
                 ps.setString(2, email.trim());
                 ps.setString(3, phoneNumber != null && !phoneNumber.trim().isEmpty() ? phoneNumber.trim() : null);
                 ps.setString(4, profilePicture); 
+                ps.setString(5, hashedPassword);
                 return ps;
             }, keyHolder);
 
@@ -187,9 +189,10 @@ public class M1Controller {
         try {
             String email = loginData.get("email");
             String phoneNumber = loginData.get("phone_number");
-            String password = loginData.get("password"); // WIP
+            String password = loginData.get("password");
+            String hashedPassword = Hasher.hashPassword(password);
 
-            logger.info("Parsed login data - Email: {}, Phone Number: {}, Password: {}", email, phoneNumber, password);
+            logger.info("Parsed login data - Email: {}, Phone Number: {}, Hashed Password: {}", email, phoneNumber, hashedPassword);
             
             // clean values to trim whitespace
             if (email != null)
@@ -214,14 +217,21 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = "SELECT uid, name, email, phone_number, profile_picture, overall_rating FROM Users WHERE email = ?";
+                sql = "SELECT * FROM Users WHERE email = ?";
                 parameter = email.trim();
             } else {
-                sql = "SELECT uid, name, email, phone_number, profile_picture, overall_rating FROM Users WHERE phone_number = ?";
+                sql = "SELECT * FROM Users WHERE phone_number = ?";
                 parameter = phoneNumber.trim();
             }
 
             Map<String, Object> user = jdbc.queryForMap(sql, parameter);
+            
+            // check for password
+            if (!hashedPassword.equals(user.get("password"))) {
+                response.put("error", "Incorrect credentials");
+                return ResponseEntity.badRequest().body(response);
+            }
+
             logger.info("Login successful for user: {}", user);
 
             return ResponseEntity.ok(user);

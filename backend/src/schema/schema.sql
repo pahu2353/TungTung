@@ -4,6 +4,7 @@ CREATE TABLE Users (
   profile_picture TEXT,
   phone_number VARCHAR(100),
   email VARCHAR(100),
+  password VARCHAR(100) NOT NULL,
   overall_rating FLOAT DEFAULT NULL,
   CONSTRAINT check_contact CHECK (phone_number IS NOT NULL OR email IS NOT NULL),
   CONSTRAINT check_overall_rating CHECK (overall_rating IS NULL OR (overall_rating >= 1.0 AND overall_rating <= 5.0)),
