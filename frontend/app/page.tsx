@@ -8,6 +8,7 @@ import SearchBar from "@/components/search-bar";
 import ListingsContainer from "@/components/listings-container";
 import LoadingIndicator from "@/components/loading-indicator";
 import CreateListingModal from "@/components/create-listing-modal";
+import type { Listing } from "@/components/listings-container";
 
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
@@ -63,6 +64,14 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching listings:", error);
     }
+  };
+
+  const handleUpdateListing = (listid: number, updated: Listing) => {
+    setListings((prev) =>
+      prev.map((listing) =>
+        listing.listid === listid ? updated : listing
+      )
+    );
   };
 
   useEffect(() => {
@@ -368,6 +377,7 @@ export default function Home() {
           onStatusFilterChange={handleStatusFilterChange}
           onExpandListing={handleExpandListing}
           user={user}
+          onUpdateListing={handleUpdateListing}
         />
       </main>
     </div>

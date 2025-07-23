@@ -78,6 +78,13 @@ public class M1Controller {
         return jdbc.queryForList(sql, params.toArray());
     }
 
+    // get specific listing by id
+    @GetMapping("/listings/{listid}")
+    public Map<String, Object> getSingleListing(@PathVariable int listid) {
+        String sql = "SELECT * FROM Listings WHERE listid = ?";
+        return jdbc.queryForMap(sql, listid);
+    }
+
     // Get review for listing
     @GetMapping("/listings/{listingId}/reviews")
     public List<Map<String, Object>> ListReviewsByListing(@PathVariable("listingId") int listingId) {
@@ -391,5 +398,12 @@ public class M1Controller {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
         }
+    }
+
+    //get assigned users for each listing
+    @GetMapping("/listings/{listid}/assigned-users")
+    public List<Integer> getAssignedUserIds(@PathVariable int listid) {
+        String sql = "SELECT uid FROM AssignedTo WHERE listid = ?";
+        return jdbc.query(sql, (rs, rowNum) -> rs.getInt("uid"), listid);
     }
 }

@@ -2,7 +2,7 @@
 
 import ListingCard from "./listing-card";
 
-interface Listing {
+export interface Listing {
   listid: number;
   listing_name: string;
   description: string;
@@ -31,6 +31,7 @@ interface ListingsContainerProps {
   onStatusFilterChange: (status: string) => void;
   onExpandListing: (listingId: number) => void;
   user: { uid: number; name: string } | null;
+  onUpdateListing: (listid: number, updated: Listing) => void;
 }
 
 export default function ListingsContainer({
@@ -42,6 +43,7 @@ export default function ListingsContainer({
   onStatusFilterChange,
   onExpandListing,
   user,
+  onUpdateListing,
 }: ListingsContainerProps) {
   // Filter listings based on status
   const filteredListings = listings.filter((listing) => {
@@ -91,6 +93,7 @@ export default function ListingsContainer({
             userNames={userNames}
             onExpand={onExpandListing}
             user={user}
+            onStatusUpdate={onUpdateListing}
           />
         ))}
       </div>
