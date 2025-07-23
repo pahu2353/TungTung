@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ProfileIconProps {
   profilePicture: string;
@@ -9,11 +10,13 @@ export default function ProfileIcon({ profilePicture, onLogout }: ProfileIconPro
   return (
     <div className="relative flex items-center gap-4">
       <Link href="/profile">
-        <img
-          src={profilePicture}
-          alt="Profile"
-          className="w-12 h-12 rounded-full border border-gray-300 cursor-pointer hover:opacity-80 transition"
-        />
+        <Avatar className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-blue-400 transition">
+          <AvatarImage src={profilePicture} alt="Profile" />
+          <AvatarFallback>
+            {/* Optionally show initials or a default icon */}
+            <span className="text-lg font-semibold">U</span>
+          </AvatarFallback>
+        </Avatar>
       </Link>
       <button
         onClick={onLogout}
