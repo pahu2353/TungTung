@@ -98,12 +98,10 @@ export default function Home() {
   const fetchFilteredSortedListings = async (
     selected: string[] = selectedCategories,
     search = searchQuery,
-    status = statusFilter,
-    sort = sortOption
+    sort = sortOption 
   ) => {
     const params = new URLSearchParams();
     selected.forEach((cat) => params.append("categories", cat));
-    params.append("status", status);
     params.append("sort", sort);
     params.append("search", search);
     params.append("uid", user?.uid || "0");
@@ -124,7 +122,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchFilteredSortedListings();
-  }, [selectedCategories, statusFilter, sortOption, searchQuery]);
+  }, [selectedCategories, sortOption, searchQuery]); 
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -388,7 +386,8 @@ export default function Home() {
         />
 
         <ListingsContainer
-          listings={finalListings}
+          listings={baseFilteredListings}
+          allListings={listings} 
           baseFilteredListings={baseFilteredListings}
           statusFilter={statusFilter}
           expandedListing={expandedListing}
