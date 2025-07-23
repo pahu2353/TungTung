@@ -1,0 +1,124 @@
+"use client";
+
+import React from "react";
+
+interface AuthModalProps {
+  showAuthModal: boolean;
+  isSignup: boolean;
+  authForm: {
+    name: string;
+    email: string;
+    phone_number: string;
+    contact: string;
+    password: string;
+  };
+  onClose: () => void;
+  onToggleMode: () => void;
+  onFormChange: (field: string, value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}
+
+export default function AuthModal({
+  showAuthModal,
+  isSignup,
+  authForm,
+  onClose,
+  onToggleMode,
+  onFormChange,
+  onSubmit,
+}: AuthModalProps) {
+  if (!showAuthModal) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
+        <h2 className="text-xl font-bold mb-4">
+          {isSignup ? 'Sign Up' : 'Login'}
+        </h2>
+        
+        <form onSubmit={onSubmit}>
+          {isSignup ? (
+            // Signup form
+            <>
+              <input
+                type="text"
+                placeholder="Name"
+                value={authForm.name}
+                onChange={(e) => onFormChange('name', e.target.value)}
+                className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                required
+              />
+              
+              <input
+                type="email"
+                placeholder="Email"
+                value={authForm.email}
+                onChange={(e) => onFormChange('email', e.target.value)}
+                className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+              />
+              
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={authForm.phone_number}
+                onChange={(e) => onFormChange('phone_number', e.target.value)}
+                className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+              />
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-3">
+                To signup, you need to enter either your email, phone number, or both. You can sign in later using either!
+              </p>
+            </>
+          ) : (
+            // Login form
+            <>
+              <input
+                type="text"
+                placeholder="Email or Phone Number"
+                value={authForm.contact}
+                onChange={(e) => onFormChange('contact', e.target.value)}
+                className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+                required
+              />
+            </>
+          )}
+          
+          <input
+            type="password"
+            placeholder="Password"
+            value={authForm.password}
+            onChange={(e) => onFormChange('password', e.target.value)}
+            className="w-full p-2 mb-3 border rounded-md dark:bg-gray-700"
+            required
+          />
+          
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="flex-1 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+            >
+              {isSignup ? 'Sign Up' : 'Login'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+        
+        <p className="text-center mt-4 text-sm">
+          {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
+          <button
+            onClick={onToggleMode}
+            className="text-blue-500 hover:underline"
+          >
+            {isSignup ? 'Login' : 'Sign Up'}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
