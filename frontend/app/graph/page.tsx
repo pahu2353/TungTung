@@ -765,9 +765,10 @@ export default function GraphPage() {
           (Math.random() - 0.5) * 2,
           Math.sin(angle) * radius
         ],
-        color: '#ffffff', // White
-        size: 0.1, // Smaller than listings
-        glowIntensity: 0.4
+        color: userData.uid === user?.uid ? '#c084fc' : '#ffffff', // lilac for current user
+        size: userData.uid === user?.uid ? 0.2 : 0.1, // bigger size for current user
+        glowIntensity: userData.uid === user?.uid ? 1.0 : 0.4, // More intense glow for current user
+        isCurrentUser: userData.uid === user?.uid
       });
     });
     
@@ -807,7 +808,7 @@ export default function GraphPage() {
     console.log("Score range:", { minScore, maxScore, scoreRange });
     
     return { nodes, edges };
-  }, [listings, users, postings, assignments]);
+  }, [listings, users, postings, assignments, user]);
 
   if (loading) {
     return (
@@ -831,7 +832,6 @@ export default function GraphPage() {
       <div className="absolute top-4 left-4 z-10">
         <Link href="/" className="inline-flex items-center text-white hover:text-gray-300 transition-colors">
           <House className="w-6 h-6" />
-          <span className="ml-2">Back to Home</span>
         </Link>
       </div>
 
