@@ -15,7 +15,6 @@ import { useSearchParams } from "next/navigation";
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
-  const [filteredListings, setFilteredListings] = useState<any[]>([]);
   const [expandedListing, setExpandedListing] = useState<number | null>(null);
   const [listingReviews, setListingReviews] = useState<{
     [key: number]: any[];
@@ -25,6 +24,7 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
+  const [sortOption, setSortOption] = useState("best-match");
 
   // Auth state
   // const [user, setUser] = useState<any>(null);
@@ -50,20 +50,15 @@ export default function Home() {
     const expand = searchParams.get("expand");
 
     if (search) {
-      setSearchQuery(search);
-      const filtered = applyFilters(listings, search, selectedCategories, statusFilter);
-      setFilteredListings(filtered);
+      setSearchQuery(search); 
     }
     if (expand) {
       const listingIdToExpand = Number(expand);
-      // this is for when we are coming from profile
-      // explicit call ensures reviews are fetched
       if (listingIdToExpand && expandedListing !== listingIdToExpand) {
         handleExpandListing(listingIdToExpand);
       }
     }
   }, [listings, searchParams]);
-
 
   // Use localStorage to check if user is logged in, update to use context setuser
   useEffect(() => {
@@ -73,58 +68,13 @@ export default function Home() {
     }
   }, [setUser]);
 
-  const handleGetTaskCategories = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/taskcategories");
-      const data = await response.json();
-      setTaskCategories(data);
-    } catch (error) {
-      console.error("Error fetching task categories:", error);
-    }
-  };
-
-  const handleGetListings = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/listings");
-      const data = await response.json();
-      setListings(data);
-      setFilteredListings(data);
-    } catch (error) {
-      console.error("Error fetching listings:", error);
-    }
-  };
-
-  const handleUpdateListing = (listid: number, updated: Listing) => {
-    setListings((prev) =>
-      prev.map((listing) =>
-        listing.listid === listid ? updated : listing
-      )
-    );
-
-    setFilteredListings((prev) =>
-      prev.map((listing) =>
-        listing.listid === listid ? updated : listing
-      )
-    );
-  };
-
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      await Promise.all([handleGetTaskCategories(), handleGetListings()]);
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
-
-
   const applyFilters = (
     allListings: any[],
     search: string,
-    categories: string[],
-    status: string
-  ) => {
+    categories: string[]
+  ): any[] => {
+    if (!Array.isArray(allListings)) return [];
+
     let filtered = [...allListings];
 
     if (search.trim()) {
@@ -137,25 +87,64 @@ export default function Home() {
       );
     }
 
-    if (status !== "all") {
-      filtered = filtered.filter((listing) => listing.status === status);
-    }
-
     return filtered;
   };
 
+  const baseFilteredListings = applyFilters(listings, searchQuery, selectedCategories);
+  const finalListings = baseFilteredListings.filter((l) =>
+    statusFilter === "all" ? true : l.status === statusFilter
+  );
+
+  const fetchFilteredSortedListings = async (
+    selected: string[] = selectedCategories,
+    search = searchQuery,
+    status = statusFilter,
+    sort = sortOption
+  ) => {
+    const params = new URLSearchParams();
+    selected.forEach((cat) => params.append("categories", cat));
+    params.append("status", status);
+    params.append("sort", sort);
+    params.append("search", search);
+    params.append("uid", user?.uid || "0");
+    params.append("latitude", "43.4723");
+    params.append("longitude", "-80.5449");
+
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:8080/listings/filterAndSort?${params.toString()}`);
+      const data = await response.json();
+      setListings(data);
+    } catch (err) {
+      console.error("Error fetching listings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFilteredSortedListings();
+  }, [selectedCategories, statusFilter, sortOption, searchQuery]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+  };
 
-    if (!query.trim()) {
-      if (selectedCategories.length > 0) {
-        toggleCategory(selectedCategories[0], true); 
-      } else {
-        setFilteredListings(listings);
-      }
-    } else {
-      const filtered = applyFilters(listings, query, selectedCategories, statusFilter);
-      setFilteredListings(filtered);
+  const handleSortChange = (sort: string) => {
+    setSortOption(sort);
+  };
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+  };
+
+  const handleGetTaskCategories = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/taskcategories");
+      const data = await response.json();
+      setTaskCategories(data);
+    } catch (error) {
+      console.error("Error fetching task categories:", error);
     }
   };
 
@@ -168,31 +157,12 @@ export default function Home() {
 
     if (skipAPICall) return;
 
-    if (updated.length === 0) {
-      await handleGetListings(); 
-      if (searchQuery.trim()) {
-        const filtered = applyFilters(listings, searchQuery, [], statusFilter);
-        setFilteredListings(filtered);
-      }
-    } else {
-      // Manually fetch filtered listings
-      const params = new URLSearchParams();
-      updated.forEach((cat) => params.append("categories", cat));
+    await fetchFilteredSortedListings(updated);
+  };
 
-      try {
-        setLoading(true);
-        const response = await fetch(`http://localhost:8080/listings/filter?${params.toString()}`);
-        const data = await response.json();
-        setListings(data);
-
-        const filtered = applyFilters(data, searchQuery, updated, statusFilter);
-        setFilteredListings(filtered);
-      } catch (error) {
-        console.error("Error fetching filtered listings:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const handleClearCategoryFilters = async () => {
+    setSelectedCategories([]);
+    await fetchFilteredSortedListings([]);
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -282,29 +252,14 @@ export default function Home() {
     setAuthForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleClearCategoryFilters = async () => {
-    setSelectedCategories([]);
-    await handleGetListings();
-    // Reapply search if there's a query
-    if (searchQuery.trim()) {
-      const filtered = applyFilters(listings, searchQuery, [], statusFilter);
-      setFilteredListings(filtered);
-    }
-  };
-
   // Fetch user name by UID
   const fetchUserName = async (uid: number) => {
-    if (userNames[uid]) {
-      return userNames[uid];
-    }
+    if (userNames[uid]) return userNames[uid];
 
     try {
       const response = await fetch(`http://localhost:8080/users/${uid}/name`);
       const name = await response.text();
-      setUserNames((prev) => ({
-        ...prev,
-        [uid]: name,
-      }));
+      setUserNames((prev) => ({ ...prev, [uid]: name }));
       return name;
     } catch (error) {
       console.error(`Error fetching name for UID ${uid}:`, error);
@@ -323,30 +278,17 @@ export default function Home() {
     // Fetch reviews for this listing if not already loaded
     if (!listingReviews[listingId]) {
       try {
-        const response = await fetch(
-          `http://localhost:8080/listings/${listingId}/reviews`
-        );
+        const response = await fetch(`http://localhost:8080/listings/${listingId}/reviews`);
         const reviews = await response.json();
 
-        const uniqueUIDs = new Set();
-        interface Review {
-          reviewer_uid: number;
-          reviewee_uid: number;
-          rating?: number;
-          comment?: string;
-          timestamp?: string;
-        }
-
-        reviews.forEach((review: Review) => {
+        const uniqueUIDs = new Set<number>();
+        reviews.forEach((review: any) => {
           if (review.reviewer_uid) uniqueUIDs.add(review.reviewer_uid);
           if (review.reviewee_uid) uniqueUIDs.add(review.reviewee_uid);
         });
 
         // Fetch names for all unique UIDs
-        const namePromises = Array.from(uniqueUIDs).map((uid) =>
-          fetchUserName(uid as number)
-        );
-        await Promise.all(namePromises);
+        await Promise.all(Array.from(uniqueUIDs).map(fetchUserName));
 
         setListingReviews((prev) => ({
           ...prev,
@@ -362,10 +304,8 @@ export default function Home() {
     try {
       const response = await fetch("http://localhost:8080/listings", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(listingData)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(listingData),
       });
 
       const data = await response.json();
@@ -373,7 +313,7 @@ export default function Home() {
       if (response.ok) {
         alert("Listing created successfully!");
         setShowCreateListingModal(false);
-        await handleGetListings();
+        await fetchFilteredSortedListings();
       } else {
         alert(data.error || "Failed to create listing");
       }
@@ -383,11 +323,17 @@ export default function Home() {
     }
   };
 
-  const handleStatusFilterChange = (status: string) => {
-    setStatusFilter(status);
-    const filtered = applyFilters(listings, searchQuery, selectedCategories, status);
-    setFilteredListings(filtered);
+  const handleUpdateListing = (listid: number, updated: Listing) => {
+    setListings((prev) =>
+      prev.map((listing) =>
+        listing.listid === listid ? updated : listing
+      )
+    );
   };
+
+  useEffect(() => {
+    handleGetTaskCategories();
+  }, []);
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -442,8 +388,8 @@ export default function Home() {
         />
 
         <ListingsContainer
-          listings={filteredListings}
-          allListings={listings} 
+          listings={finalListings}
+          baseFilteredListings={baseFilteredListings}
           statusFilter={statusFilter}
           expandedListing={expandedListing}
           listingReviews={listingReviews}
@@ -452,6 +398,8 @@ export default function Home() {
           onExpandListing={handleExpandListing}
           user={user}
           onUpdateListing={handleUpdateListing}
+          sortOption={sortOption}
+          onSortChange={handleSortChange}
         />
       </main>
     </div>

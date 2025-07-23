@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,35 +53,93 @@ public class M1Controller {
     }
 
     @GetMapping("/listings")
-    // See all the listings
+    //see all the listings
     public List<Map<String, Object>> ListListings() {
         return jdbc.queryForList("SELECT * FROM Listings");
     }
 
-    @GetMapping("/listings/filter")
-    // See filtered listings by selected categories
-    public List<Map<String, Object>> filterListings(
-        @RequestParam List<String> categories
+    @GetMapping("/listings/filterAndSort")
+    public List<Map<String, Object>> filterAndSortListings(
+        @RequestParam(required = false) List<String> categories,
+        @RequestParam(defaultValue = "all") String status,
+        @RequestParam(defaultValue = "") String search,
+        @RequestParam(defaultValue = "--") String sort,
+        @RequestParam int uid,
+        @RequestParam double latitude,
+        @RequestParam double longitude
     ) {
-        if (categories == null || categories.isEmpty()) {
-            return jdbc.queryForList("SELECT * FROM Listings");
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                L.*, 
+                COUNT(DISTINCT II.category_id) AS category_matches,
+                SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) AS distance,
+                UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW()) AS deadline_seconds,
+                -- Weighted best match score (adjust weights here)
+                (COUNT(DISTINCT II.category_id) * 10 
+                - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 5 
+                + L.price * 1 
+                - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 3600 * 3
+                ) AS match_score,
+                CASE L.status 
+                    WHEN 'open' THEN 1 
+                    WHEN 'taken' THEN 2 
+                    WHEN 'completed' THEN 3 
+                    WHEN 'cancelled' THEN 4 
+                    ELSE 5 
+                END AS status_rank
+            FROM Listings L
+            JOIN BelongsTo B ON L.listid = B.listid
+            JOIN TaskCategories T ON B.category_id = T.category_id
+            LEFT JOIN InterestedIn II 
+                ON B.category_id = II.category_id AND II.uid = ?
+            WHERE 1=1
+        """);
+
+        List<Object> params = new ArrayList<>();
+        params.add(latitude);
+        params.add(longitude);
+        params.add(uid);
+        params.add(latitude);
+        params.add(longitude);
+
+        if (categories != null && !categories.isEmpty()) {
+            sql.append(" AND T.category_name IN (")
+            .append("?,".repeat(categories.size() - 1))
+            .append("?)");
+            params.addAll(categories);
         }
 
-        String placeholders = String.join(",", categories.stream().map(c -> "?").toList());
+        if (!"all".equals(status)) {
+            sql.append(" AND L.status = ?");
+            params.add(status);
+        }
 
-        String sql =
-            "SELECT DISTINCT L.* " +
-            "FROM Listings L " +
-            "JOIN BelongsTo B ON L.listid = B.listid " +
-            "JOIN TaskCategories T ON B.category_id = T.category_id " +
-            "WHERE T.category_name IN (" + placeholders + ")" + 
-            "GROUP BY L.listid " +
-            "HAVING COUNT(DISTINCT T.category_name) = ?";
-            
-        List<Object> params = new java.util.ArrayList<>(categories);
-        params.add(categories.size()); // append the count for HAVING
+        if (!search.isEmpty()) {
+            sql.append(" AND (LOWER(L.listing_name) LIKE ? OR LOWER(L.description) LIKE ? OR LOWER(L.address) LIKE ?)");
+            String q = "%" + search.toLowerCase() + "%";
+            params.add(q);
+            params.add(q);
+            params.add(q);
+        }
 
-        return jdbc.queryForList(sql, params.toArray());
+        sql.append(" GROUP BY L.listid");
+
+        if (categories != null && !categories.isEmpty()) {
+            sql.append(" HAVING COUNT(DISTINCT T.category_name) = ?");
+            params.add(categories.size());
+        }
+
+        //add sorting
+        switch (sort.toLowerCase()) {
+            case "distance" -> sql.append(" ORDER BY status_rank ASC, distance ASC");
+            case "price" -> sql.append(" ORDER BY status_rank ASC, L.price DESC");
+            case "deadline" -> sql.append(" ORDER BY status_rank ASC, L.deadline ASC");
+            case "category" -> sql.append(" ORDER BY status_rank ASC, category_matches DESC");
+            case "best-match" -> sql.append(" ORDER BY status_rank ASC, match_score DESC");
+            default -> sql.append(" ORDER BY status_rank ASC"); //default status order
+        }
+
+        return jdbc.queryForList(sql.toString(), params.toArray());
     }
 
     // get specific listing by id
