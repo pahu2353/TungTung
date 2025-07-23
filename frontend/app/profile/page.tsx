@@ -224,14 +224,18 @@ export default function ProfilePage() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{profileData.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Phone className="w-4 h-4" />
-                    <span className="text-sm">{profileData.phone_number}</span>
-                  </div>
+                  {profileData.email && (
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-sm">{profileData.email}</span>
+                    </div>
+                  )}
+                  {profileData.phone_number && (
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Phone className="w-4 h-4" />
+                      <span className="text-sm">{profileData.phone_number}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     <span className="font-semibold">{profileData.overall_rating ?? 0}</span>
