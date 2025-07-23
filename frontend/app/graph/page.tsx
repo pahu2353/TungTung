@@ -713,6 +713,9 @@ export default function GraphPage() {
     const minScore = Math.min(...scores);
     const maxScore = Math.max(...scores);
     const scoreRange = maxScore - minScore || 1; // Avoid division by zero
+
+    // Find the listing with the highest score
+    const highestScoreListing = listings.find(l => l.match_score === maxScore);
     
     // Create listing nodes
     listings.forEach((listing, index) => {
@@ -745,6 +748,11 @@ export default function GraphPage() {
           color = '#aaaaaa'; // Brighter gray
           glowIntensity = 0.3;
           break;
+      }
+
+      // Apply extra size boost for the node with the highest score
+      if (listing === highestScoreListing) {
+        size += 0.25; // Add an extra size boost
       }
       
       nodes.push({
