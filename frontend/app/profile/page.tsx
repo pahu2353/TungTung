@@ -223,7 +223,7 @@ export default function ProfilePage() {
               {/* hard coded numbers for user stats at the moment */}
               <div className="flex flex-col items-end gap-2">
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(2450.75)}</p>
+                  <p className="text-2xl font-bold text-green-600">{formatCurrency(user.total_earnings ?? 0)}</p>
                   <p className="text-sm text-gray-500">Total Earned</p>
                 </div>
                 <div className="text-right">

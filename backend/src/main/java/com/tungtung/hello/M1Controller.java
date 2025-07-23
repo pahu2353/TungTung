@@ -226,10 +226,26 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = "SELECT * FROM Users WHERE email = ?";
+                sql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE email = ?
+                """;
                 parameter = email.trim();
             } else {
-                sql = "SELECT * FROM Users WHERE phone_number = ?";
+                sql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE phone_number = ?
+                """;
                 parameter = phoneNumber.trim();
             }
 
