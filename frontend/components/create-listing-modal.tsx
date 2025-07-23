@@ -58,9 +58,11 @@ export default function CreateListingModal({
     handleInputChange("selectedCategories", updated);
   };
 
-  const getMinDate = () => {
-    return new Date();
-  };
+ const getMinDate = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
 
   const getMinDeadline = () => {
     const now = new Date();

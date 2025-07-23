@@ -62,22 +62,16 @@ export default function AuthModal({
               <div
                 key={index}
                 onClick={() => {
-                  setSelectedCategories(prev => {
-                    let next;
-                    const isCurrentlySelected = prev.includes(category.category_id);
-
-                    if (isCurrentlySelected) {
-                      next = prev.filter(id => id !== category.category_id);
-                      console.log("unselect");
-                    } else {
-                      next = [...prev, category.category_id];
-                      console.log("select");
-                    }
-
-                    onOnboardingChange(next);
-                    console.log(next)
-                    return next;
-                  });
+                  const isCurrentlySelected = selectedCategories.includes(category.category_id);
+                  const updatedCategories = isCurrentlySelected
+                    ? selectedCategories.filter(id => id !== category.category_id)
+                    : [...selectedCategories, category.category_id];
+                  
+                  setSelectedCategories(updatedCategories);
+                  
+                  setTimeout(() => {
+                    onOnboardingChange(updatedCategories);
+                  }, 0);
                 }}
                 className={`flex-shrink-0 h-10 px-4 flex items-center rounded-full border cursor-pointer transition-colors ${
                   isSelected
