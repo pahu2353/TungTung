@@ -53,7 +53,12 @@ export default function Home() {
       setFilteredListings(filtered);
     }
     if (expand) {
-      setExpandedListing(Number(expand));
+      const listingIdToExpand = Number(expand);
+      // this is for when we are coming from profile
+      // explicit call ensures reviews are fetched
+      if (listingIdToExpand && expandedListing !== listingIdToExpand) {
+        handleExpandListing(listingIdToExpand);
+      }
     }
   }, [listings, searchParams]);
 
