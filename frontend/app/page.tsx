@@ -132,6 +132,8 @@ export default function Home() {
       if (response.ok) {
         localStorage.setItem("tungTungUser", JSON.stringify(data));
         setUser(data);
+        // log user details
+        console.log("Logged in user details:", data);
         setShowAuthModal(false);
         setAuthForm({ name: "", email: "", phone_number: "", contact: "", password: "" });
       } else {
