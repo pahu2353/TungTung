@@ -240,9 +240,15 @@ function CameraController({
     startTime: number;
     startPosition: THREE.Vector3;
     startTarget: THREE.Vector3;
-    endPosition: THREE.Vector3;
     endTarget: THREE.Vector3;
     duration: number;
+    orbitRadius: number;
+    orbitCenter: THREE.Vector3;
+    startAngle: number;
+    endAngle: number;
+    totalAngleDelta: number;
+    startHeight: number;
+    endHeight: number;
   } | null>(null);
 
   useEffect(() => {
@@ -250,51 +256,86 @@ function CameraController({
       const controls = controlsRef.current;
       const nodePos = new THREE.Vector3(...selectedNode.position);
       
-      // Calculate camera position (right third of screen, looking at node)
-      const distance = 8;
-      const offset = new THREE.Vector3(distance * 0.6, distance * 0.2, distance * 0.8);
-      const targetPosition = nodePos.clone().add(offset);
+      // Calculate orbit parameters
+      const orbitRadius = 5;
+      const orbitCenter = nodePos.clone();
       
-      // Start animation
+      // Calculate the starting angle based on current camera position relative to the target
+      const currentRelativePos = camera.position.clone().sub(orbitCenter);
+      const startAngle = Math.atan2(currentRelativePos.z, currentRelativePos.x);
+      
+      // Calculate end angle (about 230 degrees rotation)
+      const endAngle = startAngle + Math.PI * 1.3;
+      const totalAngleDelta = Math.PI * 1.3;
+      
+      // Heights for smooth vertical movement
+      const startHeight = camera.position.y;
+      const endHeight = orbitCenter.y + 1;
+      
+      // Start animation from current camera position
       animationRef.current = {
         startTime: Date.now(),
         startPosition: camera.position.clone(),
         startTarget: controls.target.clone(),
-        endPosition: targetPosition,
         endTarget: nodePos.clone(),
-        duration: 1500 // 1.5 seconds
+        duration: 2000,
+        orbitRadius,
+        orbitCenter,
+        startAngle,
+        endAngle,
+        totalAngleDelta,
+        startHeight,
+        endHeight
       };
     }
   }, [selectedNode, camera, controlsRef]);
 
   useFrame(() => {
     if (animationRef.current && controlsRef.current) {
-      const { startTime, startPosition, startTarget, endPosition, endTarget, duration } = animationRef.current;
+      const { 
+        startTime, 
+        startPosition, 
+        startTarget, 
+        endTarget, 
+        duration, 
+        orbitRadius, 
+        orbitCenter,
+        startAngle,
+        endAngle,
+        totalAngleDelta,
+        startHeight,
+        endHeight
+      } = animationRef.current;
+      
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
+
+      // Smooth easing with slight acceleration in middle
+      const easeInOutQuart = (t: number) => {
+        return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+      };
+      const easedProgress = easeInOutQuart(progress);
+
+      // Calculate current angle with smooth interpolation
+      const currentAngle = startAngle + (easedProgress * totalAngleDelta);
       
-      // Smooth easing function
-      const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
-      const easedProgress = easeInOutCubic(progress);
+      // Calculate distance from orbit center (gradually move towards orbit radius)
+      const startDistance = startPosition.distanceTo(orbitCenter);
+      const currentDistance = startDistance + (orbitRadius - startDistance) * easedProgress;
       
-      // Interpolate camera position with curved path
-      const midPoint = startPosition.clone().add(endPosition).multiplyScalar(0.5);
-      midPoint.y += 3; // Add curve height
+      // Calculate height with smooth interpolation
+      const currentHeight = startHeight + (endHeight - startHeight) * easedProgress;
       
-      let currentPosition;
-      if (easedProgress < 0.5) {
-        // First half: start to midpoint
-        const t = easedProgress * 2;
-        currentPosition = startPosition.clone().lerp(midPoint, t);
-      } else {
-        // Second half: midpoint to end
-        const t = (easedProgress - 0.5) * 2;
-        currentPosition = midPoint.clone().lerp(endPosition, t);
-      }
-      
-      // Interpolate target
+      // Calculate current position using smooth orbital interpolation
+      const currentPosition = new THREE.Vector3(
+        orbitCenter.x + currentDistance * Math.cos(currentAngle),
+        currentHeight,
+        orbitCenter.z + currentDistance * Math.sin(currentAngle)
+      );
+
+      // Interpolate target position
       const currentTarget = startTarget.clone().lerp(endTarget, easedProgress);
-      
+
       // Apply to camera and controls
       camera.position.copy(currentPosition);
       controlsRef.current.target.copy(currentTarget);
