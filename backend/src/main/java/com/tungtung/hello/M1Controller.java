@@ -430,8 +430,8 @@ public class M1Controller {
 
     //get assigned users for each listing
     @GetMapping("/listings/{listid}/assigned-users")
-    public List<Integer> getAssignedUserIds(@PathVariable int listid) {
-        String sql = "SELECT uid FROM AssignedTo WHERE listid = ?";
-        return jdbc.query(sql, (rs, rowNum) -> rs.getInt("uid"), listid);
+    public List<Map<String, Object>> getAssignedUsers(@PathVariable int listid) {
+        String sql = "SELECT U.uid, U.name, U.profile_picture FROM AssignedTo A JOIN Users U ON A.uid = U.uid WHERE A.listid = ?";
+        return jdbc.queryForList(sql, listid);
     }
 }

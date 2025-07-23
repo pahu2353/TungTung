@@ -1,8 +1,11 @@
 "use client";
 
 import ReviewsList from "./reviews-list";
+import { AssignedList } from "./assigned-list";
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Listing {
   listid: number;
@@ -44,6 +47,7 @@ export default function ListingCard({
   onStatusUpdate,
 }: ListingCardProps) {
   const [isAssigned, setIsAssigned] = useState(false);
+  const [assignedUsers, setAssignedUsers] = useState<{ uid: number; name: string; profile_picture: string }[]>([]);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -58,13 +62,27 @@ export default function ListingCard({
     }
   };
 
+  // Helper function to split name into first and last
+  const splitName = (fullName: string) => {
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: '' };
+    }
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(' ');
+    return { firstName, lastName };
+  };
+
   useEffect(() => {
     const checkAssigned = async () => {
       if (!user) return;
       try {
         const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
         const data = await res.json();
-        const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
+        // For assignment check, just use uids
+        const uids = Array.isArray(data)
+          ? data.map((row: any) => row.uid ?? row)
+          : [];
         setIsAssigned(uids.includes(user.uid));
       } catch (err) {
         console.error("Failed to fetch assigned users:", err);
@@ -74,6 +92,22 @@ export default function ListingCard({
 
     checkAssigned();
   }, [user, listing.listid, listing.status]); // Re-check if listing changes
+
+    // Fetch assigned users with name and profile picture when expanded
+    useEffect(() => {
+      const fetchAssignedUsers = async () => {
+        if (!isExpanded) return;
+        try {
+          const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+          const data = await res.json();
+          // Expect data: [{ uid, name, profile_picture }]
+          setAssignedUsers(Array.isArray(data) ? data : []);
+        } catch (err) {
+          setAssignedUsers([]);
+        }
+      };
+      fetchAssignedUsers();
+    }, [isExpanded, listing.listid]);
 
   const handleAcceptTask = async () => {
     if (!user) return;
@@ -93,11 +127,17 @@ export default function ListingCard({
         const updated = await res.json();
         onStatusUpdate?.(listing.listid, updated); // tell parent
 
-        // Re-check assignment
-        const check = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
-        const data = await check.json();
-        const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
+        // Re-fetch assigned users immediately
+        const assignedRes = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const assignedData = await assignedRes.json();
+        setAssignedUsers(Array.isArray(assignedData) ? assignedData : []);
+        const uids = Array.isArray(assignedData) ? assignedData.map((row: any) => row.uid ?? row) : [];
         setIsAssigned(uids.includes(user.uid));
+
+        // Optionally, re-fetch reviews if you want to update them too
+        // const reviewsRes = await fetch(`http://localhost:8080/listings/${listing.listid}/reviews`);
+        // const reviewsData = await reviewsRes.json();
+        // setReviews(reviewsData); // If you have a setReviews state
       } else {
         toast.error(message || "Unable to assign task.");
       }
@@ -214,6 +254,38 @@ export default function ListingCard({
       {isExpanded && (
         <div className="border-t bg-gray-50 dark:bg-gray-800">
           <div className="p-4 space-y-4">
+            {/* Assigned Users Horizontal List */}
+            <div>
+              <h5 className="font-semibold mb-2">Assigned Users:</h5>
+              <ScrollArea className="w-full">
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {assignedUsers.length === 0 ? (
+                    <span className="text-gray-500 text-sm">No users assigned yet.</span>
+                  ) : (
+                    assignedUsers.map((assigned) => {
+                      const { firstName, lastName } = splitName(assigned.name || '');
+                      return (
+                        <div key={assigned.uid} className="flex flex-col items-center min-w-[80px]">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
+                            <AvatarFallback>
+                              {assigned.name
+                                ? assigned.name.split(" ").map((n) => n[0]).join("")
+                                : "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
+                            <div className="font-medium">{firstName}</div>
+                            {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+            {/* Reviews List */}
             <h5 className="font-semibold mb-3">Reviews:</h5>
             {reviews ? (
               <ReviewsList reviews={reviews} userNames={userNames} />
