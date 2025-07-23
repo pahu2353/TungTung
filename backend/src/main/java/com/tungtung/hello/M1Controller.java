@@ -614,4 +614,104 @@ public class M1Controller {
             return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
         }
     }
+
+    // Create a review (after a posting is completed)
+    // Triggers ensure that reviewer is the person who posted
+    @PostMapping("/reviews")
+    public ResponseEntity<Map<String, Object>> createReview(@RequestBody Map<String, Object> reviewData) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Integer listid = (Integer) reviewData.get("listid");
+            Integer reviewerUid = (Integer) reviewData.get("reviewer_uid");
+            Integer revieweeUid = (Integer) reviewData.get("reviewee_uid");
+            Integer rating = (Integer) reviewData.get("rating");
+            String comment = (String) reviewData.get("comment");
+            
+            if (listid == null || reviewerUid == null || revieweeUid == null || rating == null) {
+                response.put("error", "Missing required fields");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (rating < 1 || rating > 5) {
+                response.put("error", "Rating must be between 1 and 5");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (reviewerUid.equals(revieweeUid)) {
+                response.put("error", "You cannot review yourself");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if listing exists and is completed
+            String listingSql = "SELECT status FROM Listings WHERE listid = ?";
+            String listingStatus;
+            try {
+                listingStatus = jdbc.queryForObject(listingSql, String.class, listid);
+            } catch (Exception e) {
+                response.put("error", "Listing not found");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (!"completed".equals(listingStatus)) {
+                response.put("error", "Only completed listings can be reviewed");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Some checks, though we also have triggers
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, reviewerUid);
+            
+            if (isPoster == 0) {
+                response.put("error", "Only the task creator can leave reviews");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if reviewee was assigned to the listing
+            String assignedCheckSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(assignedCheckSql, Integer.class, listid, revieweeUid);
+            
+            if (isAssigned == 0) {
+                response.put("error", "You can only review users who were assigned to this task");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if review already exists
+            String reviewExistsSql = "SELECT COUNT(*) FROM Reviews WHERE listid = ? AND reviewer_uid = ? AND reviewee_uid = ?";
+            int reviewExists = jdbc.queryForObject(reviewExistsSql, Integer.class, listid, reviewerUid, revieweeUid);
+            
+            if (reviewExists > 0) {
+                // Update existing review
+                String updateSql = "UPDATE Reviews SET rating = ?, comment = ?, timestamp = CURRENT_TIMESTAMP WHERE listid = ? AND reviewer_uid = ? AND reviewee_uid = ?";
+                jdbc.update(updateSql, rating, comment, listid, reviewerUid, revieweeUid);
+                
+                response.put("message", "Review updated successfully");
+            } else {
+                // Insert new review
+                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment) VALUES (?, ?, ?, ?, ?)";
+                jdbc.update(insertSql, listid, reviewerUid, revieweeUid, rating, comment);
+                
+                response.put("message", "Review submitted successfully");
+            }
+            
+            // Update user's overall rating
+            String updateRatingSql = """
+                UPDATE Users
+                SET overall_rating = (
+                    SELECT AVG(rating)
+                    FROM Reviews
+                    WHERE reviewee_uid = ?
+                )
+                WHERE uid = ?
+            """;
+            jdbc.update(updateRatingSql, revieweeUid, revieweeUid);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error creating review: {}", e.getMessage(), e);
+            response.put("error", "Failed to submit review");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
 }

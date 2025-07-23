@@ -9,12 +9,16 @@ import { Separator } from "@/components/ui/separator";
 import { Wrench, NotebookPen, House, Star, MapPin, Clock, DollarSign, Calendar, User, Mail, Phone } from "lucide-react";
 import { useUser } from "../UserContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import ReviewModal from "@/components/review-modal";
 
 export default function ProfilePage() {
   const { user, setUser } = useUser();
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [currentListingForReview, setCurrentListingForReview] = useState<any>(null);
+  const [assignedUsersForReview, setAssignedUsersForReview] = useState<any[]>([]);
   
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -65,6 +69,29 @@ export default function ProfilePage() {
     fetchData();
   }, [uidParam, user, setUser]);
 
+  const handleSubmitReview = async (review: any) => {
+    try {
+      const response = await fetch("http://localhost:8080/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(review),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit review");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      throw error;
+    }
+  };
+
   const handleMarkComplete = async (listingId: number) => {
     try {
       const response = await fetch(`http://localhost:8080/listings/${listingId}/complete`, {
@@ -79,6 +106,7 @@ export default function ProfilePage() {
 
       if (response.ok) {
         // Update the listing status locally
+        const updatedListing = createdListings.find(listing => listing.listid === listingId);
         const updatedCreatedListings = createdListings.map(listing => 
           listing.listid === listingId ? { ...listing, status: 'completed' } : listing
         );
@@ -90,6 +118,19 @@ export default function ProfilePage() {
         });
         
         alert("Task marked as complete!");
+        
+        const assignedResponse = await fetch(`http://localhost:8080/listings/${listingId}/assigned-users`);
+        if (assignedResponse.ok) {
+          const assignedUsers = await assignedResponse.json();
+          if (assignedUsers && assignedUsers.length > 0) {
+            setCurrentListingForReview({
+              listid: listingId,
+              listing_name: updatedListing?.listing_name || `Listing #${listingId}`
+            });
+            setAssignedUsersForReview(assignedUsers);
+            setShowReviewModal(true);
+          }
+        }
       } else {
         alert(message || "Failed to mark task as complete");
       }
@@ -382,6 +423,17 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        listingId={currentListingForReview?.listid}
+        listingName={currentListingForReview?.listing_name}
+        assignedUsers={assignedUsersForReview}
+        reviewerUid={user?.uid}
+        onSubmitReview={handleSubmitReview}
+      />
     </div>
   );
 }
