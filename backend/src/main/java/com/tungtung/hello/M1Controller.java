@@ -463,6 +463,51 @@ public class M1Controller {
         }
     }
 
+    //unassign user from listing
+    @PostMapping("/listings/{listid}/unassign/{uid}")
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ResponseEntity<String> unassignTask(@PathVariable int listid, @PathVariable int uid) {
+        try {
+            // Lock the listing row with FOR UPDATE, prevents concurrent changes
+            String checkListingSql = "SELECT status FROM Listings WHERE listid = ? FOR UPDATE";
+            Map<String, Object> listing;
+            
+            try {
+                listing = jdbc.queryForMap(checkListingSql, listid);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Listing not found.");
+            }
+            
+            // Check if listing is in a state that allows unassignment
+            String status = (String) listing.get("status");
+            if ("completed".equalsIgnoreCase(status) || "cancelled".equalsIgnoreCase(status)) {
+                return ResponseEntity.badRequest().body("Cannot unassign from a completed or cancelled listing.");
+            }
+            
+            // Check if the user is actually assigned to this listing
+            String checkAssignedSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(checkAssignedSql, Integer.class, listid, uid);
+            
+            if (isAssigned == 0) {
+                return ResponseEntity.badRequest().body("You are not assigned to this task.");
+            }
+            
+            // Remove the assignment
+            String deleteSql = "DELETE FROM AssignedTo WHERE listid = ? AND uid = ?";
+            jdbc.update(deleteSql, listid, uid);
+            
+            // Update the listing status back to open if currently taken
+            if ("taken".equalsIgnoreCase(status)) {
+                String updateStatusSql = "UPDATE Listings SET status = 'open' WHERE listid = ?";
+                jdbc.update(updateStatusSql, listid);
+            }
+            
+            return ResponseEntity.ok("Successfully unassigned from task.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
+
     //get assigned users for each listing
     @GetMapping("/listings/{listid}/assigned-users")
     public List<Map<String, Object>> getAssignedUsers(@PathVariable int listid) {
