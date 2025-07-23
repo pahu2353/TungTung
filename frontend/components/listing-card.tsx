@@ -1,7 +1,6 @@
 "use client";
 
 import ReviewsList from "./reviews-list";
-import { AssignedList } from "./assigned-list";
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
