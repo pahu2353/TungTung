@@ -285,6 +285,16 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
+            // get reviews
+            String review_sql = """
+                SELECT * FROM Reviews
+                WHERE reviewee_uid = ?
+            """;
+            
+            List<Map<String, Object>> reviews = jdbc.queryForList(review_sql, user.get("uid"));
+            user.put("reviews", reviews);
+
+
             logger.info("Login successful for user: {}", user);
 
             return ResponseEntity.ok(user);
