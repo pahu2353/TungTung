@@ -75,10 +75,11 @@ public class M1Controller {
                 SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) AS distance,
                 UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW()) AS deadline_seconds,
                 -- Weighted best match score (adjust weights here)
-                (COUNT(DISTINCT II.category_id) * 10 
-                - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 5 
-                + L.price * 1 
-                - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 3600 * 3
+                (
+                    COUNT(DISTINCT II.category_id) * 50
+                    + L.price * 1
+                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 90000
+                    - (POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 10
                 ) AS match_score,
                 CASE L.status 
                     WHEN 'open' THEN 1 
@@ -98,9 +99,9 @@ public class M1Controller {
         List<Object> params = new ArrayList<>();
         params.add(latitude);
         params.add(longitude);
-        params.add(uid);
         params.add(latitude);
         params.add(longitude);
+        params.add(uid);
 
         if (categories != null && !categories.isEmpty()) {
             sql.append(" AND T.category_name IN (")
