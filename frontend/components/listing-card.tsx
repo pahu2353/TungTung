@@ -121,7 +121,7 @@ export default function ListingCard({
                   listing.status
                 )}`}
               >
-                {listing.status.toUpperCase()}
+                {typeof listing.status === 'string' ? listing.status.toUpperCase() : listing.status}
               </span>
 
               {user && (
