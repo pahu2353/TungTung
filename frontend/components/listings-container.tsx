@@ -24,6 +24,7 @@ interface Review {
 
 interface ListingsContainerProps {
   listings: Listing[];
+  allListings?: Listing[]; // Add this new prop
   statusFilter: string;
   expandedListing: number | null;
   listingReviews: { [key: number]: Review[] };
@@ -36,6 +37,7 @@ interface ListingsContainerProps {
 
 export default function ListingsContainer({
   listings,
+  allListings, // Accept the new prop
   statusFilter,
   expandedListing,
   listingReviews,
@@ -45,6 +47,8 @@ export default function ListingsContainer({
   user,
   onUpdateListing,
 }: ListingsContainerProps) {
+  const listingsForCounts = allListings || listings;
+
   // Filter listings based on status
   const filteredListings = listings.filter((listing) => {
     if (statusFilter === "all") return true;
@@ -58,7 +62,7 @@ export default function ListingsContainer({
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold">Listings:</h3>
 
-        {/* Status Filter Dropdown */}
+        {/* Status Filter Dropdown - Use listingsForCounts for accurate counts */}
         <div className="flex items-center gap-2">
           <label htmlFor="status-filter" className="text-sm font-medium">
             Filter by status:
@@ -69,15 +73,15 @@ export default function ListingsContainer({
             onChange={(e) => onStatusFilterChange(e.target.value)}
             className="px-3 py-1 border rounded-md bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-sm"
           >
-            <option value="all">All ({listings.length})</option>
+            <option value="all">All ({listingsForCounts.length})</option>
             <option value="open">
-              Open ({listings.filter((l) => l.status === "open").length})
+              Open ({listingsForCounts.filter((l) => l.status === "open").length})
             </option>
             <option value="taken">
-              Taken ({listings.filter((l) => l.status === "taken").length})
+              Taken ({listingsForCounts.filter((l) => l.status === "taken").length})
             </option>
             <option value="completed">
-              Completed ({listings.filter((l) => l.status === "completed").length})
+              Completed ({listingsForCounts.filter((l) => l.status === "completed").length})
             </option>
           </select>
         </div>
