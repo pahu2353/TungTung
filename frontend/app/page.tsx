@@ -24,7 +24,7 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
-  const [sortOption, setSortOption] = useState("best-match");
+  const [sortOption, setSortOption] = useState<string>("--");
 
   // Auth state
   // const [user, setUser] = useState<any>(null);
