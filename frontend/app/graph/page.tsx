@@ -83,7 +83,43 @@ function ClickableNode({
   isFaded: boolean
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  
+  const groupRef = useRef<THREE.Group>(null);
+
+  const originalPosition = useRef<[number, number, number]>(node.position);
+
+  // Create unique random offsets for each node
+  const floatOffset = useRef({
+    x: Math.random() * Math.PI * 2,
+    y: Math.random() * Math.PI * 2,
+    z: Math.random() * Math.PI * 2,
+    speedX: 0.3 + Math.random() * 0.4,
+    speedY: 0.2 + Math.random() * 0.3,
+    speedZ: 0.4 + Math.random() * 0.5,
+    amplitudeX: 0.02 + Math.random() * 0.03,
+    amplitudeY: 0.015 + Math.random() * 0.025,
+    amplitudeZ: 0.02 + Math.random() * 0.03,
+  });
+
+  // Add floating animation
+  useFrame((state) => {
+    if (groupRef.current) {
+      const time = state.clock.getElapsedTime();
+      const offset = floatOffset.current;
+      
+      // Calculate floating movement
+      const floatX = Math.sin(time * offset.speedX + offset.x) * offset.amplitudeX;
+      const floatY = Math.sin(time * offset.speedY + offset.y) * offset.amplitudeY;
+      const floatZ = Math.sin(time * offset.speedZ + offset.z) * offset.amplitudeZ;
+      
+      // Apply floating offset to original position
+      groupRef.current.position.set(
+        originalPosition.current[0] + floatX,
+        originalPosition.current[1] + floatY,
+        originalPosition.current[2] + floatZ
+      );
+    }
+  });
+
   const handleClick = (event: any) => {
     event.stopPropagation();
     onClick(node);
@@ -168,7 +204,7 @@ function ClickableNode({
   const glowProps = getGlowProperties();
   
   return (
-    <group position={node.position}>
+    <group position={node.position} ref={groupRef}>
       {/* Main node sphere */}
       <mesh ref={meshRef} onClick={handleClick}>
         <sphereGeometry args={[node.size, 32, 32]} />
