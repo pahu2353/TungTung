@@ -8,6 +8,7 @@ CREATE TABLE Users (
   profile_picture TEXT,
   phone_number VARCHAR(100),
   email VARCHAR(100),
+  password VARCHAR(100) NOT NULL,
   overall_rating FLOAT DEFAULT NULL,
   CONSTRAINT check_contact CHECK (phone_number IS NOT NULL OR email IS NOT NULL),
   CONSTRAINT check_overall_rating CHECK (overall_rating IS NULL OR (overall_rating >= 1.0 AND overall_rating <= 5.0)),
@@ -219,23 +220,25 @@ END$$
 DELIMITER ;
 
 INSERT INTO
-    Users (name, profile_picture, phone_number, email)
+    Users (name, profile_picture, phone_number, email, password)
 VALUES
     (
         'Alice Green',
         NULL,
         '416-555-1234',
-        'alice@example.com'
+        'alice@example.com',
+        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'
     ),
     (
         'Bob Smith',
         NULL,
         '647-555-2345',
-        'bob@example.com'
+        'bob@example.com',
+        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'
     ),
-    ('Charlie Lee', NULL, NULL, 'charlie@example.com'),
-    ('Daisy Patel', NULL, '647-555-3456', NULL),
-    ('Evan Wong', NULL, NULL, 'evan@example.com');
+    ('Charlie Lee', NULL, NULL, 'charlie@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+    ('Daisy Patel', NULL, '647-555-3456', NULL, '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+    ('Evan Wong', NULL, NULL, 'evan@example.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8');
 
 INSERT INTO
     TaskCategories (category_name)
