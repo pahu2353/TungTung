@@ -1,4 +1,4 @@
-import React from "react";
+import Link from "next/link";
 
 interface ProfileIconProps {
   profilePicture: string;
@@ -8,11 +8,13 @@ interface ProfileIconProps {
 export default function ProfileIcon({ profilePicture, onLogout }: ProfileIconProps) {
   return (
     <div className="relative flex items-center gap-4">
-      <img
-        src={profilePicture}
-        alt="Profile"
-        className="w-12 h-12 rounded-full border border-gray-300"
-      />
+      <Link href="/profile">
+        <img
+          src={profilePicture}
+          alt="Profile"
+          className="w-12 h-12 rounded-full border border-gray-300 cursor-pointer hover:opacity-80 transition"
+        />
+      </Link>
       <button
         onClick={onLogout}
         className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
