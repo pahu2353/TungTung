@@ -252,13 +252,28 @@ public class M1Controller {
             Object parameter; // Either email or phone_number
 
             // Check whether user gave us an email or a phone number
-            if (email != null && !email.isEmpty() && isEmail(email)) {
-                sql = "SELECT * FROM Users WHERE email = ?";
-                parameter = email;
+            if (email != null && !email.trim().isEmpty() && isEmail(email)) {
+                sql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE email = ?
+                """;
+                parameter = email.trim();
             } else {
-                // Normalize the stored phone numbers for comparison
-                sql = "SELECT * FROM Users WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?";
-                parameter = phoneNumber;
+                sql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE phone_number = ?
+                """;
+                parameter = phoneNumber.trim();
             }
 
             Map<String, Object> user = jdbc.queryForMap(sql, parameter);
