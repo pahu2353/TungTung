@@ -598,7 +598,7 @@ export default function GraphPage() {
       
       let color = '#4a5568'; // Default dim gray
       let glowIntensity = 0;
-      let size = 0.05; // Fixed smaller size for non-open listings
+      let size = 0.1; // Fixed smaller size for non-open listings
       
       // Normalize the score to 0-1 range for glow calculation
       const normalizedScore = scoreRange > 0 ? (listing.match_score - minScore) / scoreRange : 0;
@@ -607,7 +607,7 @@ export default function GraphPage() {
         case 'open':
           color = '#48cc6c'; // Bright pastel green
           glowIntensity = Math.max(0.5, normalizedScore * 1.2); // Stronger glow
-          size = 0.08 + (normalizedScore * 0.06); // Size varies from 0.08 to 0.14 for open listings only
+          size = 0.08 + (normalizedScore * 0.1); // Size varies from 0.08 to 0.14 for open listings only
           break;
         case 'taken':
           color = '#ff6666'; // Brighter red
@@ -653,7 +653,7 @@ export default function GraphPage() {
           Math.sin(angle) * radius
         ],
         color: '#ffffff', // White
-        size: 0.06, // Smaller than listings
+        size: 0.1, // Smaller than listings
         glowIntensity: 0.4
       });
     });
