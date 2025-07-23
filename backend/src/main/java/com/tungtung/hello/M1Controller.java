@@ -727,6 +727,24 @@ public class M1Controller {
         }
     }
 
+    // Get poster info for a listing
+    @GetMapping("/listings/{listid}/poster")
+    public Map<String, Object> getListingPoster(@PathVariable int listid) {
+        String sql = "SELECT U.uid, U.name, U.profile_picture FROM Posts P JOIN Users U ON P.uid = U.uid WHERE P.listid = ?";
+        return jdbc.queryForMap(sql, listid);
+    }
+
+    @GetMapping("/listings/{listid}/categories")
+    public List<String> getListingCategories(@PathVariable int listid) {
+        String sql = """
+            SELECT T.category_name
+            FROM BelongsTo B
+            JOIN TaskCategories T ON B.category_id = T.category_id
+            WHERE B.listid = ?
+        """;
+        return jdbc.queryForList(sql, String.class, listid);
+    }
+
     // Create a review (after a posting is completed)
     // Triggers ensure that reviewer is the person who posted
     @PostMapping("/reviews")
@@ -799,8 +817,7 @@ public class M1Controller {
                 
                 response.put("message", "Review updated successfully");
             } else {
-                // Insert new review
-                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment) VALUES (?, ?, ?, ?, ?)";
+                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
                 jdbc.update(insertSql, listid, reviewerUid, revieweeUid, rating, comment);
                 
                 response.put("message", "Review submitted successfully");
