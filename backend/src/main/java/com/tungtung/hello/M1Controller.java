@@ -171,6 +171,7 @@ public class M1Controller {
             response.put("email", email.trim());
             response.put("phone_number", phoneNumber);
             response.put("profile_picture", profilePicture); 
+            response.put("total_earnings", 0);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
