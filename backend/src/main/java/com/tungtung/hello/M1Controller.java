@@ -574,4 +574,44 @@ public class M1Controller {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    // Mark a listing as complete
+    @PostMapping("/listings/{listid}/complete")
+    public ResponseEntity<String> markListingComplete(@PathVariable int listid, @RequestBody Map<String, Integer> requestBody) {
+        try {
+            Integer posterUid = requestBody.get("poster_uid");
+            
+            if (posterUid == null) {
+                return ResponseEntity.badRequest().body("User ID is required");
+            }
+            
+            // Make sure we're the poster (otherwise you can't mark as complete obviously)
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, posterUid);
+            
+            if (isPoster == 0) {
+                return ResponseEntity.badRequest().body("Only the task creator can mark it as complete");
+            }
+            
+            String statusSql = "SELECT status FROM Listings WHERE listid = ?";
+            String currentStatus = jdbc.queryForObject(statusSql, String.class, listid);
+            
+            if ("completed".equals(currentStatus) || "cancelled".equals(currentStatus)) {
+                return ResponseEntity.badRequest().body("This task is already marked as " + currentStatus);
+            }
+            
+            if (!"taken".equals(currentStatus)) {
+                return ResponseEntity.badRequest().body("This task must be assigned to someone before marking as complete");
+            }
+            
+            // Update the status to completed
+            String updateSql = "UPDATE Listings SET status = 'completed' WHERE listid = ?";
+            jdbc.update(updateSql, listid);
+            
+            return ResponseEntity.ok("Task marked as complete");
+        } catch (Exception e) {
+            logger.error("Error marking listing as complete: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
 }

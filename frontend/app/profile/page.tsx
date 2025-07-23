@@ -65,6 +65,40 @@ export default function ProfilePage() {
     fetchData();
   }, [uidParam, user, setUser]);
 
+  const handleMarkComplete = async (listingId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8080/listings/${listingId}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ poster_uid: user?.uid }),
+      });
+
+      const message = await response.text();
+
+      if (response.ok) {
+        // Update the listing status locally
+        const updatedCreatedListings = createdListings.map(listing => 
+          listing.listid === listingId ? { ...listing, status: 'completed' } : listing
+        );
+        
+        // Update the state with the new listings data
+        setProfileData({
+          ...profileData,
+          created_listings: updatedCreatedListings
+        });
+        
+        alert("Task marked as complete!");
+      } else {
+        alert(message || "Failed to mark task as complete");
+      }
+    } catch (error) {
+      console.error("Error marking task as complete:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -221,6 +255,30 @@ export default function ProfilePage() {
                       <span>Capacity: {listing.capacity}</span>
                     </div>
                   </div>
+                  
+                  {/* Mark as complete! */}
+                  {user && user.uid === profileData.uid && listing.status === 'taken' && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <button 
+                        onClick={() => handleMarkComplete(listing.listid)}
+                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium flex items-center gap-2"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="w-4 h-4" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        Mark as Complete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}
