@@ -895,38 +895,42 @@ export default function GraphPage() {
         )}
 
       {/* Legend */}
-      <div
+        <div
         className="absolute top-4 right-4 z-10 p-4 rounded-lg text-white text-sm"
         style={{ backgroundColor: 'rgba(35, 35, 37, 0.52)' }} // Match the listing details background
-      >        
+        >
         <h3 className="font-bold mb-2">Legend</h3>
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
             <span>Open Listings</span>
-          </div>
-          <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
             <span>Taken Listings</span>
-          </div>
-          <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
             <span>Completed Listings</span>
-          </div>
-          <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-white rounded-full"></div>
             <span>Users</span>
-          </div>
-          <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+            <span>Current User</span>
+            </div>
+            <div className="flex items-center gap-2">
             <div className="w-8 h-0.5 bg-teal-400"></div>
             <span>Posted By</span>
-          </div>
-          <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-2">
             <div className="w-8 h-0.5 bg-white"></div>
             <span>Assigned To</span>
-          </div>
+            </div>
         </div>
-      </div>
+        </div>
 
       {/* 3D Canvas - Full Screen */}
       <Canvas 
