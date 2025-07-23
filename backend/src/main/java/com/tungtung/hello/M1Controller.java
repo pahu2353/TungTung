@@ -254,57 +254,37 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = """
-                SELECT * FROM Users u LEFT OUTER JOIN (
-                    SELECT SUM(price) total_earnings, uid
-                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
-                    WHERE status = 'completed'
-                    GROUP BY uid
-                ) earnings ON u.uid = earnings.uid
-                WHERE email = ?
-                """;
+                sql = "SELECT uid, password FROM Users WHERE email = ?";
                 parameter = email.trim();
             } else {
-                sql = """
-                SELECT * FROM Users u LEFT OUTER JOIN (
-                    SELECT SUM(price) total_earnings, uid
-                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
-                    WHERE status = 'completed'
-                    GROUP BY uid
-                ) earnings ON u.uid = earnings.uid
-                WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?
-                """;
+                sql = "SELECT uid, password FROM Users WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?";
                 parameter = phoneNumber.trim();
             }
 
-            Map<String, Object> user = jdbc.queryForMap(sql, parameter);
+            Map<String, Object> credentials = jdbc.queryForMap(sql, parameter);
             
             // check for password
-            if (!hashedPassword.equals(user.get("password"))) {
+            if (!hashedPassword.equals(credentials.get("password"))) {
                 response.put("error", "Incorrect credentials");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // get reviews
-            String review_sql = """
-                SELECT * FROM Reviews
-                WHERE reviewee_uid = ?
-            """;
+            // call getUserProfile to populate their profile
+            int uid = ((Number) credentials.get("uid")).intValue();
+            ResponseEntity<Map<String, Object>> profileResponse = getUserProfile(uid);
             
-            List<Map<String, Object>> reviews = jdbc.queryForList(review_sql, user.get("uid"));
-            user.put("reviews", reviews);
+            if (profileResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.ok(profileResponse.getBody());
+            } else {
+                return profileResponse;
+            }
 
-
-            logger.info("Login successful for user: {}", user);
-
-            return ResponseEntity.ok(user);
-
-        } catch (Exception e) {
-            logger.error("Login error: {}", e.getMessage(), e);
-            response.put("error", "User not found");
-            return ResponseEntity.badRequest().body(response);
-        }
+    } catch (Exception e) {
+        logger.error("Login error: {}", e.getMessage(), e);
+        response.put("error", "User not found");
+        return ResponseEntity.badRequest().body(response);
     }
+}
 
     // Create new listing
     @CrossOrigin(origins = "http://localhost:3000")
@@ -488,5 +468,65 @@ public class M1Controller {
     public List<Map<String, Object>> getAssignedUsers(@PathVariable int listid) {
         String sql = "SELECT U.uid, U.name, U.profile_picture FROM AssignedTo A JOIN Users U ON A.uid = U.uid WHERE A.listid = ?";
         return jdbc.queryForList(sql, listid);
+    }
+
+    @CrossOrigin(origins = "http://localhost:3000")
+    @GetMapping("/profile/{uid}")
+    public ResponseEntity<Map<String, Object>> getUserProfile(@PathVariable("uid") int uid) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Total earnings
+            String userSql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE u.uid = ?
+            """;
+            
+            Map<String, Object> user = jdbc.queryForMap(userSql, uid);
+            
+            // We don't need password (and it's bad security to include it D:)
+            user.remove("password");
+            
+            String reviewSql = """
+                SELECT r.*, u.name AS reviewer_name, listing_name FROM Reviews r 
+                JOIN Users u ON r.reviewer_uid = u.uid 
+                JOIN Listings l ON r.listid = l.listid
+                WHERE reviewee_uid = ?
+            """;
+            List<Map<String, Object>> reviews = jdbc.queryForList(reviewSql, uid);
+            user.put("reviews", reviews);
+            
+            // Get listings that user created
+            String createdListingsSql = """
+                SELECT l.* 
+                FROM Listings l 
+                JOIN Posts p ON l.listid = p.listid 
+                WHERE p.uid = ?
+            """;
+            List<Map<String, Object>> createdListings = jdbc.queryForList(createdListingsSql, uid);
+            user.put("created_listings", createdListings);
+            
+            // Get listings assigned to this user
+            String assignedListingsSql = """
+                SELECT l.* 
+                FROM Listings l 
+                JOIN AssignedTo a ON l.listid = a.listid 
+                WHERE a.uid = ?
+            """;
+            List<Map<String, Object>> assignedListings = jdbc.queryForList(assignedListingsSql, uid);
+            user.put("assigned_listings", assignedListings);
+            
+            return ResponseEntity.ok(user);
+            
+        } catch (Exception e) {
+            logger.error("Error fetching user profile: {}", e.getMessage(), e);
+            response.put("error", "User not found");
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }
