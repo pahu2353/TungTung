@@ -134,7 +134,12 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            String sql = "INSERT INTO Users (name, email, phone_number) VALUES (?, ?, ?)";
+            // Generate profile picture path
+            int hash = Math.abs(name.hashCode());
+            int catNumber = (hash % 7) + 1; // Ensure the result is between 1 and 7
+            String profilePicture = "/cat" + catNumber + ".jpg";
+
+            String sql = "INSERT INTO Users (name, email, phone_number, profile_picture) VALUES (?, ?, ?, ?)";
 
             // Run the query and grab the UID, storing it in keyHolder
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -144,6 +149,7 @@ public class M1Controller {
                 ps.setString(1, name.trim());
                 ps.setString(2, email.trim());
                 ps.setString(3, phoneNumber != null && !phoneNumber.trim().isEmpty() ? phoneNumber.trim() : null);
+                ps.setString(4, profilePicture); 
                 return ps;
             }, keyHolder);
 
@@ -153,9 +159,12 @@ public class M1Controller {
             response.put("name", name.trim());
             response.put("email", email.trim());
             response.put("phone_number", phoneNumber);
+            response.put("profile_picture", profilePicture); 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+            logger.error("Error during signup: {}", e.getMessage(), e); // Log the exception
+
             response.put("error", "Either the email already exists or you have invalid data. Try again!");
             return ResponseEntity.badRequest().body(response);
         }
