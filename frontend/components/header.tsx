@@ -74,10 +74,10 @@ export default function Header({
     </header>
 
       {/* Bottom right graph icon button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-13 right-13 z-50">
         <Link href="/graph">
           <button
-            className="flex items-center justify-center w-14 h-14 rounded-full border border-blue-300 bg-blue-400/80 backdrop-blur-md shadow-lg transition hover:bg-blue-500/90"
+            className="flex items-center justify-center w-14 h-14 rounded-full border border-blue-300 bg-blue-400/80 backdrop-blur-md cursor-pointer hover:bg-blue-500/90"
             title="View Network Graph"
             aria-label="View Network Graph"
           >

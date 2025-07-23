@@ -1,12 +1,58 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, extend, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useUser } from "../UserContext";
 import Link from "next/link";
 import { House } from "lucide-react";
 import * as THREE from "three";
+
+// Custom shader material for realistic glow
+const glowVertexShader = `
+  varying vec3 vNormal;
+  varying vec3 vPositionNormal;
+  
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vPositionNormal = normalize((modelViewMatrix * vec4(position, 1.0)).xyz);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const glowFragmentShader = `
+  uniform vec3 glowColor;
+  uniform float glowIntensity;
+  uniform float glowPower;
+  varying vec3 vNormal;
+  varying vec3 vPositionNormal;
+  
+  void main() {
+    float intensity = pow(0.9 - dot(vNormal, vPositionNormal), glowPower);
+    gl_FragColor = vec4(glowColor, intensity * glowIntensity);
+  }
+`;
+
+// Outer glow shader for atmospheric effect
+const outerGlowVertexShader = `
+  varying vec3 vNormal;
+  
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const outerGlowFragmentShader = `
+  uniform vec3 glowColor;
+  uniform float glowIntensity;
+  varying vec3 vNormal;
+  
+  void main() {
+    float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+    gl_FragColor = vec4(glowColor, intensity * glowIntensity * 0.4);
+  }
+`;
 
 interface GraphNode {
   id: string;
@@ -25,7 +71,17 @@ interface GraphEdge {
   color: string;
 }
 
-function ClickableNode({ node, onClick }: { node: GraphNode, onClick: (node: GraphNode) => void }) {
+function ClickableNode({ 
+  node, 
+  onClick, 
+  isHighlighted, 
+  isFaded 
+}: { 
+  node: GraphNode, 
+  onClick: (node: GraphNode) => void,
+  isHighlighted: boolean,
+  isFaded: boolean
+}) {
   const meshRef = useRef<THREE.Mesh>(null);
   
   const handleClick = (event: any) => {
@@ -33,73 +89,240 @@ function ClickableNode({ node, onClick }: { node: GraphNode, onClick: (node: Gra
     onClick(node);
   };
   
-  // Determine material properties based on node type
-  const getMaterialProps = () => {
+  // Convert hex color to RGB for shaders
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16) / 255,
+      g: parseInt(result[2], 16) / 255,
+      b: parseInt(result[3], 16) / 255
+    } : { r: 1, g: 1, b: 1 };
+  };
+  
+  // Apply fading effect
+  const displayColor = isFaded ? '#666666' : node.color;
+  const rgbColor = hexToRgb(displayColor);
+  const colorVector = new THREE.Vector3(rgbColor.r, rgbColor.g, rgbColor.b);
+  
+  // Determine glow properties based on node type and status
+  const getGlowProperties = () => {
+    const baseProps = {
+      glowIntensity: 0.4,
+      glowRadius: 1.2,
+      outerGlowRadius: 1.8
+    };
+
+    if (isFaded) {
+      return {
+        glowIntensity: baseProps.glowIntensity * 0.3,
+        glowRadius: baseProps.glowRadius,
+        outerGlowRadius: baseProps.outerGlowRadius
+      };
+    }
+
     if (node.type === 'user') {
       return {
-        color: node.color,
-        metalness: 0.1,
-        roughness: 0.6,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.4
+        glowIntensity: 0.4,
+        glowRadius: 1.2,
+        outerGlowRadius: 1.8
       };
     } else {
-      return {
-        color: node.color,
-        emissive: node.glowIntensity ? node.color : '#000000',
-        emissiveIntensity: node.glowIntensity || 0,
-        metalness: 0.3,
-        roughness: 0.4,
-        clearcoat: 0.8,
-        clearcoatRoughness: 0.2
-      };
+      // Listing node
+      switch (node.data.status) {
+        case 'open':
+          return {
+            glowIntensity: node.glowIntensity || 0.8,
+            glowRadius: 1.3,
+            outerGlowRadius: 2.0
+          };
+        case 'taken':
+          return {
+            glowIntensity: 0.5,
+            glowRadius: 1.1,
+            outerGlowRadius: 1.6
+          };
+        case 'completed':
+          return {
+            glowIntensity: 0.5,
+            glowRadius: 1.1,
+            outerGlowRadius: 1.6
+          };
+        case 'cancelled':
+          return {
+            glowIntensity: 0.3,
+            glowRadius: 1.0,
+            outerGlowRadius: 1.4
+          };
+        default:
+          return baseProps;
+      }
     }
   };
   
+  const glowProps = getGlowProperties();
+  
   return (
     <group position={node.position}>
+      {/* Main node sphere */}
       <mesh ref={meshRef} onClick={handleClick}>
-        <sphereGeometry args={[node.size, 16, 16]} />
-        <meshPhysicalMaterial {...getMaterialProps()} />
+        <sphereGeometry args={[node.size, 32, 32]} />
+        <meshPhysicalMaterial
+          color={displayColor}
+          emissive={displayColor}
+          emissiveIntensity={isFaded ? 0.1 : 0.3}
+          metalness={0.1}
+          roughness={0.2}
+          clearcoat={0.8}
+          clearcoatRoughness={0.1}
+          opacity={isFaded ? 0.4 : 1.0}
+          transparent={isFaded}
+        />
       </mesh>
       
-      {/* Enhanced glow effect for bright nodes */}
-      {node.glowIntensity && node.glowIntensity > 0.2 && (
-        <>
-          {/* Inner glow */}
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[node.size * 2, 16, 16]} />
-            <meshBasicMaterial 
-              color={node.color}
-              transparent
-              opacity={node.glowIntensity * 0.4}
-            />
-          </mesh>
-          {/* Outer diffuse glow */}
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[node.size * 3.5, 12, 12]} />
-            <meshBasicMaterial 
-              color={node.color}
-              transparent
-              opacity={node.glowIntensity * 0.15}
-            />
-          </mesh>
-          {/* Far diffuse glow */}
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[node.size * 5, 8, 8]} />
-            <meshBasicMaterial 
-              color={node.color}
-              transparent
-              opacity={node.glowIntensity * 0.08}
-            />
-          </mesh>
-        </>
+      {/* Inner glow layer */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[node.size * glowProps.glowRadius, 24, 24]} />
+        <shaderMaterial
+          vertexShader={glowVertexShader}
+          fragmentShader={glowFragmentShader}
+          uniforms={{
+            glowColor: { value: colorVector },
+            glowIntensity: { value: glowProps.glowIntensity },
+            glowPower: { value: 1.5 }
+          }}
+          transparent={true}
+          blending={THREE.AdditiveBlending}
+          side={THREE.BackSide}
+        />
+      </mesh>
+      
+      {/* Outer atmospheric glow */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[node.size * glowProps.outerGlowRadius, 16, 16]} />
+        <shaderMaterial
+          vertexShader={outerGlowVertexShader}
+          fragmentShader={outerGlowFragmentShader}
+          uniforms={{
+            glowColor: { value: colorVector },
+            glowIntensity: { value: glowProps.glowIntensity * 0.6 }
+          }}
+          transparent={true}
+          blending={THREE.AdditiveBlending}
+          side={THREE.BackSide}
+        />
+      </mesh>
+      
+      {/* Additional soft glow for open listings */}
+      {node.type === 'listing' && node.data.status === 'open' && !isFaded && (
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[node.size * 4, 12, 12]} />
+          <meshBasicMaterial 
+            color={node.color}
+            transparent
+            opacity={glowProps.glowIntensity * 0.08}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
       )}
     </group>
   );
 }
 
-function NetworkGraph({ nodes, edges, onNodeClick }: { nodes: GraphNode[], edges: GraphEdge[], onNodeClick: (node: GraphNode) => void }) {
+function CameraController({ 
+  selectedNode, 
+  controlsRef 
+}: { 
+  selectedNode: GraphNode | null,
+  controlsRef: React.RefObject<any>
+}) {
+  const { camera } = useThree();
+  const animationRef = useRef<{
+    startTime: number;
+    startPosition: THREE.Vector3;
+    startTarget: THREE.Vector3;
+    endPosition: THREE.Vector3;
+    endTarget: THREE.Vector3;
+    duration: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (selectedNode && controlsRef.current) {
+      const controls = controlsRef.current;
+      const nodePos = new THREE.Vector3(...selectedNode.position);
+      
+      // Calculate camera position (right third of screen, looking at node)
+      const distance = 8;
+      const offset = new THREE.Vector3(distance * 0.6, distance * 0.2, distance * 0.8);
+      const targetPosition = nodePos.clone().add(offset);
+      
+      // Start animation
+      animationRef.current = {
+        startTime: Date.now(),
+        startPosition: camera.position.clone(),
+        startTarget: controls.target.clone(),
+        endPosition: targetPosition,
+        endTarget: nodePos.clone(),
+        duration: 1500 // 1.5 seconds
+      };
+    }
+  }, [selectedNode, camera, controlsRef]);
+
+  useFrame(() => {
+    if (animationRef.current && controlsRef.current) {
+      const { startTime, startPosition, startTarget, endPosition, endTarget, duration } = animationRef.current;
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Smooth easing function
+      const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      const easedProgress = easeInOutCubic(progress);
+      
+      // Interpolate camera position with curved path
+      const midPoint = startPosition.clone().add(endPosition).multiplyScalar(0.5);
+      midPoint.y += 3; // Add curve height
+      
+      let currentPosition;
+      if (easedProgress < 0.5) {
+        // First half: start to midpoint
+        const t = easedProgress * 2;
+        currentPosition = startPosition.clone().lerp(midPoint, t);
+      } else {
+        // Second half: midpoint to end
+        const t = (easedProgress - 0.5) * 2;
+        currentPosition = midPoint.clone().lerp(endPosition, t);
+      }
+      
+      // Interpolate target
+      const currentTarget = startTarget.clone().lerp(endTarget, easedProgress);
+      
+      // Apply to camera and controls
+      camera.position.copy(currentPosition);
+      controlsRef.current.target.copy(currentTarget);
+      controlsRef.current.update();
+      
+      // End animation
+      if (progress >= 1) {
+        animationRef.current = null;
+      }
+    }
+  });
+
+  return null;
+}
+
+function NetworkGraph({ 
+  nodes, 
+  edges, 
+  onNodeClick, 
+  selectedNode 
+}: { 
+  nodes: GraphNode[], 
+  edges: GraphEdge[], 
+  onNodeClick: (node: GraphNode) => void,
+  selectedNode: GraphNode | null
+}) {
+  const controlsRef = useRef<any>(null);
+
   const handleNodeClick = (node: GraphNode) => {
     console.log('=== NODE CLICKED ===');
     console.log('Node Type:', node.type);
@@ -114,45 +337,71 @@ function NetworkGraph({ nodes, edges, onNodeClick }: { nodes: GraphNode[], edges
     onNodeClick(node);
   };
 
+  // Calculate which nodes and edges should be highlighted
+  const getHighlightedElements = () => {
+    if (!selectedNode) return { highlightedNodes: new Set(), highlightedEdges: new Set() };
+    
+    const highlightedNodes = new Set([selectedNode.id]);
+    const highlightedEdges = new Set<string>();
+    
+    // Find all edges connected to the selected node
+    edges.forEach((edge, index) => {
+      if (edge.source === selectedNode.id || edge.target === selectedNode.id) {
+        highlightedEdges.add(`${edge.source}-${edge.target}-${index}`);
+        // Add the other node in the edge
+        highlightedNodes.add(edge.source === selectedNode.id ? edge.target : edge.source);
+      }
+    });
+    
+    return { highlightedNodes, highlightedEdges };
+  };
+
+  const { highlightedNodes, highlightedEdges } = getHighlightedElements();
+
   return (
     <>
+      {/* Camera Controller */}
+      <CameraController selectedNode={selectedNode} controlsRef={controlsRef} />
+
       {/* Enhanced Lighting Setup */}
-      <ambientLight intensity={0.2} color="#1a1a2e" />
+      <ambientLight intensity={0.1} color="#0a0a0a" />
       
-      {/* Key light */}
+      {/* Key light - dimmed to let glow effects shine */}
       <directionalLight 
         position={[10, 15, 5]} 
-        intensity={1.2} 
+        intensity={0.3} 
         color="#ffffff"
-        castShadow
       />
       
-      {/* Fill light */}
+      {/* Fill light - reduced */}
       <directionalLight 
         position={[-8, 10, -5]} 
-        intensity={0.6} 
+        intensity={0.2} 
         color="#4a90e2"
       />
       
-      {/* Rim light */}
+      {/* Rim light - reduced */}
       <directionalLight 
         position={[0, -10, 10]} 
-        intensity={0.4} 
+        intensity={0.1} 
         color="#ff6b6b"
       />
       
-      {/* Point lights for atmospheric effect */}
-      <pointLight position={[15, 8, 15]} intensity={0.5} color="#00ff88" />
-      <pointLight position={[-15, -8, -15]} intensity={0.3} color="#ff4444" />
-      
       {/* Render Nodes */}
-      {nodes.map((node) => (
-        <ClickableNode 
-          key={node.id} 
-          node={node} 
-          onClick={handleNodeClick}
-        />
-      ))}
+      {nodes.map((node) => {
+        const isHighlighted = highlightedNodes.has(node.id);
+        const isFaded = selectedNode !== null && !isHighlighted;
+        
+        return (
+          <ClickableNode 
+            key={node.id} 
+            node={node} 
+            onClick={handleNodeClick}
+            isHighlighted={isHighlighted}
+            isFaded={isFaded}
+          />
+        );
+      })}
 
       {/* Render Edges */}
       {edges.map((edge, index) => {
@@ -163,6 +412,11 @@ function NetworkGraph({ nodes, edges, onNodeClick }: { nodes: GraphNode[], edges
         
         const start = sourceNode.position;
         const end = targetNode.position;
+        const edgeKey = `${edge.source}-${edge.target}-${index}`;
+        
+        const isHighlighted = highlightedEdges.has(edgeKey);
+        const isFaded = selectedNode !== null && !isHighlighted;
+        const displayColor = isFaded ? '#444444' : edge.color;
         
         const points = [new THREE.Vector3(...start), new THREE.Vector3(...end)];
         
@@ -176,10 +430,22 @@ function NetworkGraph({ nodes, edges, onNodeClick }: { nodes: GraphNode[], edges
                 itemSize={3}
               />
             </bufferGeometry>
-            <lineBasicMaterial color={edge.color} />
+            <lineBasicMaterial 
+              color={displayColor} 
+              opacity={isFaded ? 0.3 : 1.0}
+              transparent={isFaded}
+            />
           </line>
         );
       })}
+
+      {/* Controls */}
+      <OrbitControls 
+        ref={controlsRef}
+        enablePan={true} 
+        enableZoom={true} 
+        enableRotate={true} 
+      />
     </>
   );
 }
@@ -280,7 +546,7 @@ export default function GraphPage() {
       
       let color = '#4a5568'; // Default dim gray
       let glowIntensity = 0;
-      let size = 0.08; // Much smaller base size
+      let size = 0.05; // Fixed smaller size for non-open listings
       
       // Normalize the score to 0-1 range for glow calculation
       const normalizedScore = scoreRange > 0 ? (listing.match_score - minScore) / scoreRange : 0;
@@ -289,19 +555,19 @@ export default function GraphPage() {
         case 'open':
           color = '#48cc6c'; // Bright pastel green
           glowIntensity = Math.max(0.5, normalizedScore * 1.2); // Stronger glow
-          size = 0.08 + (normalizedScore * 0.06); // Size varies from 0.08 to 0.14 for open listings
+          size = 0.08 + (normalizedScore * 0.06); // Size varies from 0.08 to 0.14 for open listings only
           break;
         case 'taken':
-          color = '#ff4444'; // Red
-          size = 0.05; // Small fixed size
+          color = '#ff6666'; // Brighter red
+          glowIntensity = 0.5;
           break;
         case 'completed':
-          color = '#ffa500'; // Orange
-          size = 0.05; // Small fixed size
+          color = '#ffaa44'; // Brighter orange/yellow
+          glowIntensity = 0.5;
           break;
         case 'cancelled':
-          color = '#8a8a8a'; // Gray
-          size = 0.05; // Small fixed size
+          color = '#aaaaaa'; // Brighter gray
+          glowIntensity = 0.3;
           break;
       }
       
@@ -316,7 +582,7 @@ export default function GraphPage() {
         ],
         color,
         size,
-        glowIntensity: listing.status === 'open' ? glowIntensity : 0
+        glowIntensity
       });
     });
     
@@ -335,7 +601,8 @@ export default function GraphPage() {
           Math.sin(angle) * radius
         ],
         color: '#ffffff', // White
-        size: 0.06 // Smaller than listings
+        size: 0.06, // Smaller than listings
+        glowIntensity: 0.4
       });
     });
     
@@ -480,10 +747,12 @@ export default function GraphPage() {
         <color attach="background" args={['#000000']} />
         
         {/* Network Graph */}
-        <NetworkGraph nodes={nodes} edges={edges} onNodeClick={setSelectedNode} />
-        
-        {/* Controls */}
-        <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+        <NetworkGraph 
+          nodes={nodes} 
+          edges={edges} 
+          onNodeClick={setSelectedNode} 
+          selectedNode={selectedNode}
+        />
       </Canvas>
     </div>
   );
