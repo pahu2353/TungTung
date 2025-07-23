@@ -19,12 +19,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 // Allow CORS
 @CrossOrigin(origins = "http://localhost:3000")
 public class M1Controller {
 
     private final JdbcTemplate jdbc;
+
+    private static final Logger logger = LoggerFactory.getLogger(M1Controller.class);
 
     public M1Controller(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
@@ -166,6 +171,8 @@ public class M1Controller {
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData) {
+        logger.info("Login endpoint called with data: {}", loginData);
+        
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -173,6 +180,8 @@ public class M1Controller {
             String phoneNumber = loginData.get("phone_number");
             String password = loginData.get("password"); // WIP
 
+            logger.info("Parsed login data - Email: {}, Phone Number: {}, Password: {}", email, phoneNumber, password);
+            
             // clean values to trim whitespace
             if (email != null)
                 email = email.trim();
@@ -196,14 +205,15 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = "SELECT uid, name, email, phone_number FROM Users WHERE email = ?";
+                sql = "SELECT uid, name, email, phone_number, profile_picture, overall_rating FROM Users WHERE email = ?";
                 parameter = email.trim();
             } else {
-                sql = "SELECT uid, name, email, phone_number FROM Users WHERE phone_number = ?";
+                sql = "SELECT uid, name, email, phone_number, profile_picture, overall_rating FROM Users WHERE phone_number = ?";
                 parameter = phoneNumber.trim();
             }
 
             Map<String, Object> user = jdbc.queryForMap(sql, parameter);
+            logger.info("Login successful for user: {}", user);
 
             return ResponseEntity.ok(user);
 
