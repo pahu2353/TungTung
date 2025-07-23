@@ -76,10 +76,10 @@ public class M1Controller {
                 UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW()) AS deadline_seconds,
                 -- Weighted best match score (adjust weights here)
                 (
-                    COUNT(DISTINCT II.category_id) * 50
-                    + L.price * 1
-                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 90000
-                    - (POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 10
+                    COUNT(DISTINCT II.category_id) * 75
+                    + (L.price/L.duration) * 10
+                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 60000
+                    - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 1
                 ) AS match_score,
                 CASE L.status 
                     WHEN 'open' THEN 1 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +39,28 @@ export default function CreateListingModal({
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [deadlineTime, setDeadlineTime] = useState("12:00");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lon: number } | null>(null);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (formData.address.trim().length > 3) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.address)}`)
+          .then(res => res.json())
+          .then(data => setSuggestions(data))
+          .catch(err => console.error("Error fetching address suggestions", err));
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [formData.address]);
+
+  const handleSelectSuggestion = (suggestion: any) => {
+    setFormData(prev => ({ ...prev, address: suggestion.display_name }));
+    setSelectedCoords({ lat: parseFloat(suggestion.lat), lon: parseFloat(suggestion.lon) });
+    setSuggestions([]);
+  };
 
   if (!showModal) return null;
 
@@ -75,7 +97,11 @@ export default function CreateListingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (!selectedCoords) {
+      alert("Please select a valid address from the dropdown suggestions.");
+      return;
+    }
+
     if (formData.selectedCategories.length === 0) {
       alert("Please select at least one category");
       return;
@@ -110,10 +136,8 @@ export default function CreateListingModal({
         duration: parseInt(formData.duration),
         deadline: deadlineDateTime.toISOString(),
         address: formData.address,
-
-        // Temporarily hardcoded
-        longitude: -79.3832,
-        latitude: 43.6532,  
+        longitude: selectedCoords.lon,
+        latitude: selectedCoords.lat,
         poster_uid: user.uid,
         category_ids: formData.selectedCategories
       };
@@ -131,6 +155,7 @@ export default function CreateListingModal({
       });
       setDeadline(undefined);
       setDeadlineTime("12:00");
+      setSelectedCoords(null);
     } catch (error) {
       console.error("Error creating listing:", error);
     } finally {
@@ -150,6 +175,7 @@ export default function CreateListingModal({
     });
     setDeadline(undefined);
     setDeadlineTime("12:00");
+    setSelectedCoords(null);
     onClose();
   };
 
@@ -168,9 +194,7 @@ export default function CreateListingModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Listing Name *
-            </label>
+            <label className="block text-sm font-medium mb-1">Listing Name *</label>
             <input
               type="text"
               value={formData.listing_name}
@@ -181,9 +205,7 @@ export default function CreateListingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
@@ -194,9 +216,7 @@ export default function CreateListingModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Price ($) *
-              </label>
+              <label className="block text-sm font-medium mb-1">Price ($) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -209,9 +229,7 @@ export default function CreateListingModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Number of People Needed *
-              </label>
+              <label className="block text-sm font-medium mb-1">Number of People Needed *</label>
               <input
                 type="number"
                 min="1"
@@ -225,9 +243,7 @@ export default function CreateListingModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Duration (minutes) *
-              </label>
+              <label className="block text-sm font-medium mb-1">Duration (minutes) *</label>
               <input
                 type="number"
                 min="1"
@@ -239,9 +255,7 @@ export default function CreateListingModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Deadline *
-              </label>
+              <label className="block text-sm font-medium mb-1">Deadline *</label>
               <div className="space-y-2">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -263,7 +277,7 @@ export default function CreateListingModal({
                     />
                   </PopoverContent>
                 </Popover>
-                
+
                 <input
                   type="time"
                   value={deadlineTime}
@@ -281,9 +295,7 @@ export default function CreateListingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Address *
-            </label>
+            <label className="block text-sm font-medium mb-1">Address *</label>
             <input
               type="text"
               value={formData.address}
@@ -291,6 +303,19 @@ export default function CreateListingModal({
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
+            {suggestions.length > 0 && (
+              <ul className="border mt-2 rounded-md bg-white max-h-40 overflow-auto text-sm">
+                {suggestions.map((sugg, idx) => (
+                  <li
+                    key={idx}
+                    onClick={() => handleSelectSuggestion(sugg)}
+                    className="p-2 hover:bg-blue-100 cursor-pointer"
+                  >
+                    {sugg.display_name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div>

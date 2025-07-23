@@ -24,7 +24,7 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
-  const [sortOption, setSortOption] = useState("best-match");
+  const [sortOption, setSortOption] = useState<string>("--");
 
   // Auth state
   // const [user, setUser] = useState<any>(null);
@@ -42,7 +42,7 @@ export default function Home() {
   });
 
   const [showCreateListingModal, setShowCreateListingModal] = useState(false);
-
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -95,6 +95,15 @@ export default function Home() {
     statusFilter === "all" ? true : l.status === statusFilter
   );
 
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+      });
+    }
+  }, []);
+
   const fetchFilteredSortedListings = async (
     selected: string[] = selectedCategories,
     search = searchQuery,
@@ -105,8 +114,8 @@ export default function Home() {
     params.append("sort", sort);
     params.append("search", search);
     params.append("uid", user?.uid || "0");
-    params.append("latitude", "43.4723");
-    params.append("longitude", "-80.5449");
+    params.append("latitude", userLocation?.latitude?.toString() || "43.4723");
+    params.append("longitude", userLocation?.longitude?.toString() || "-80.5449");
 
     try {
       setLoading(true);
