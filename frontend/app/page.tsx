@@ -72,6 +72,12 @@ export default function Home() {
         listing.listid === listid ? updated : listing
       )
     );
+
+    setFilteredListings((prev) =>
+      prev.map((listing) =>
+        listing.listid === listid ? updated : listing
+      )
+    );
   };
 
   useEffect(() => {

@@ -44,6 +44,7 @@ export default function ListingCard({
   onStatusUpdate,
 }: ListingCardProps) {
   const [isAssigned, setIsAssigned] = useState(false);
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "open":
@@ -58,38 +59,45 @@ export default function ListingCard({
   };
 
   useEffect(() => {
-  const checkAssigned = async () => {
-    if (!user) return;
-    try {
-      const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
-      const data = await res.json();
-      const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
-      setIsAssigned(uids.includes(user.uid)); 
-    } catch (err) {
-      console.error("Failed to fetch assigned users:", err);
-      setIsAssigned(false); 
-    }
-  };
+    const checkAssigned = async () => {
+      if (!user) return;
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const data = await res.json();
+        const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
+        setIsAssigned(uids.includes(user.uid));
+      } catch (err) {
+        console.error("Failed to fetch assigned users:", err);
+        setIsAssigned(false);
+      }
+    };
 
-  checkAssigned();
-}, [user, listing.listid, listing.status]);
+    checkAssigned();
+  }, [user, listing.listid, listing.status]); // Re-check if listing changes
 
   const handleAcceptTask = async () => {
+    if (!user) return;
+
     try {
       const response = await fetch(
-        `http://localhost:8080/listings/${listing.listid}/assign/${user?.uid}`,
+        `http://localhost:8080/listings/${listing.listid}/assign/${user.uid}`,
         { method: "POST" }
       );
       const message = await response.text();
 
       if (response.ok) {
-        setIsAssigned(true);
         toast.success(message || "Successfully assigned task!");
 
-        // re-fetch updated listing (e.g. now marked as 'taken')
+        // Get updated listing
         const res = await fetch(`http://localhost:8080/listings/${listing.listid}`);
         const updated = await res.json();
-        onStatusUpdate?.(listing.listid, updated);
+        onStatusUpdate?.(listing.listid, updated); // tell parent
+
+        // Re-check assignment
+        const check = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const data = await check.json();
+        const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
+        setIsAssigned(uids.includes(user.uid));
       } else {
         toast.error(message || "Unable to assign task.");
       }
@@ -100,7 +108,6 @@ export default function ListingCard({
 
   return (
     <div className="bg-white dark:bg-gray-700 rounded-lg border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* listing header */}
       <div
         className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         onClick={() => onExpand(listing.listid)}
@@ -117,7 +124,6 @@ export default function ListingCard({
                 {listing.status.toUpperCase()}
               </span>
 
-              {/* accept/accepted button */}
               {user && (
                 isAssigned ? (
                   <span
@@ -208,16 +214,12 @@ export default function ListingCard({
       {isExpanded && (
         <div className="border-t bg-gray-50 dark:bg-gray-800">
           <div className="p-4 space-y-4">
-            <div>
-              <h5 className="font-semibold mb-3">Reviews:</h5>
-              {reviews ? (
-                <ReviewsList reviews={reviews} userNames={userNames} />
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">
-                  Loading reviews...
-                </p>
-              )}
-            </div>
+            <h5 className="font-semibold mb-3">Reviews:</h5>
+            {reviews ? (
+              <ReviewsList reviews={reviews} userNames={userNames} />
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">Loading reviews...</p>
+            )}
           </div>
         </div>
       )}
