@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { React, useEffect, useState, useMemo, useRef } from "react";
 import { Canvas, useThree, extend, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useUser } from "../UserContext";
@@ -327,12 +327,15 @@ function ClickableNode({
   );
 }
 
-function CameraController({ 
+// 3. OPTIONAL: Add smooth camera following for better UX
+function CameraControllerWithSmoothing({ 
   selectedNode, 
-  controlsRef 
+  controlsRef,
+  nodePositions
 }: { 
   selectedNode: GraphNode | null,
-  controlsRef: React.RefObject<any>
+  controlsRef: React.RefObject<any>,
+  nodePositions: Map<string, [number, number, number]>
 }) {
   const { camera } = useThree();
   const animationRef = useRef<{
@@ -348,12 +351,20 @@ function CameraController({
     totalAngleDelta: number;
     startHeight: number;
     endHeight: number;
+    selectedNodeId: string;
   } | null>(null);
+
+  // Track the target position with smoothing
+  const smoothTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  const smoothPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
   useEffect(() => {
     if (selectedNode && controlsRef.current) {
       const controls = controlsRef.current;
-      const nodePos = new THREE.Vector3(...selectedNode.position);
+      
+      // Get current animated position, fallback to original position
+      const currentNodePos = nodePositions.get(selectedNode.id) || selectedNode.position;
+      const nodePos = new THREE.Vector3(...currentNodePos);
       
       // Calculate orbit parameters
       const orbitRadius = 5;
@@ -369,7 +380,10 @@ function CameraController({
       
       // Heights for smooth vertical movement
       const startHeight = camera.position.y;
-      const endHeight = orbitCenter.y;
+      const endHeight = orbitCenter.y + 1;
+      
+      // Initialize smooth tracking
+      smoothTargetRef.current.copy(nodePos);
       
       // Start animation from current camera position
       animationRef.current = {
@@ -384,32 +398,39 @@ function CameraController({
         endAngle,
         totalAngleDelta,
         startHeight,
-        endHeight
+        endHeight,
+        selectedNodeId: selectedNode.id
       };
     }
   }, [selectedNode, camera, controlsRef]);
 
   useFrame(() => {
-    if (animationRef.current && controlsRef.current) {
+    if (animationRef.current && controlsRef.current && selectedNode) {
       const { 
         startTime, 
         startPosition, 
         startTarget, 
-        endTarget, 
         duration, 
         orbitRadius, 
-        orbitCenter,
         startAngle,
-        endAngle,
         totalAngleDelta,
         startHeight,
-        endHeight
+        selectedNodeId
       } = animationRef.current;
       
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Smooth easing with slight acceleration in middle
+      // Get current animated position of the target node
+      const currentNodePos = nodePositions.get(selectedNodeId);
+      if (currentNodePos) {
+        const targetPos = new THREE.Vector3(...currentNodePos);
+        
+        // Smooth following with lerp (adjust 0.1 for responsiveness)
+        smoothTargetRef.current.lerp(targetPos, 0.1);
+      }
+
+      // Smooth easing
       const easeInOutQuart = (t: number) => {
         return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
       };
@@ -419,21 +440,21 @@ function CameraController({
       const currentAngle = startAngle + (easedProgress * totalAngleDelta);
       
       // Calculate distance from orbit center (gradually move towards orbit radius)
-      const startDistance = startPosition.distanceTo(orbitCenter);
+      const startDistance = startPosition.distanceTo(smoothTargetRef.current);
       const currentDistance = startDistance + (orbitRadius - startDistance) * easedProgress;
       
       // Calculate height with smooth interpolation
-      const currentHeight = startHeight + (endHeight - startHeight) * easedProgress;
+      const currentHeight = startHeight + (smoothTargetRef.current.y + 1 - startHeight) * easedProgress;
       
-      // Calculate current position using smooth orbital interpolation
+      // Calculate current position using smooth orbital interpolation around the smoothed target
       const currentPosition = new THREE.Vector3(
-        orbitCenter.x + currentDistance * Math.cos(currentAngle),
+        smoothTargetRef.current.x + currentDistance * Math.cos(currentAngle),
         currentHeight,
-        orbitCenter.z + currentDistance * Math.sin(currentAngle)
+        smoothTargetRef.current.z + currentDistance * Math.sin(currentAngle)
       );
 
-      // Interpolate target position
-      const currentTarget = startTarget.clone().lerp(endTarget, easedProgress);
+      // Interpolate target position using smoothed node position
+      const currentTarget = startTarget.clone().lerp(smoothTargetRef.current, easedProgress);
 
       // Apply to camera and controls
       camera.position.copy(currentPosition);
@@ -505,8 +526,11 @@ function NetworkGraph({
   return (
     <>
       {/* Camera Controller */}
-      <CameraController selectedNode={selectedNode} controlsRef={controlsRef} />
-
+      <CameraControllerWithSmoothing 
+        selectedNode={selectedNode} 
+        controlsRef={controlsRef}
+        nodePositions={nodePositions}
+      />
       {/* Enhanced Lighting Setup */}
       <ambientLight intensity={0.1} color="#0a0a0a" />
       
@@ -871,7 +895,10 @@ export default function GraphPage() {
         )}
 
       {/* Legend */}
-      <div className="absolute top-4 right-4 z-10 bg-black bg-opacity-75 p-4 rounded-lg text-white text-sm">
+      <div
+        className="absolute top-4 right-4 z-10 p-4 rounded-lg text-white text-sm"
+        style={{ backgroundColor: 'rgba(35, 35, 37, 0.52)' }} // Match the listing details background
+      >        
         <h3 className="font-bold mb-2">Legend</h3>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
