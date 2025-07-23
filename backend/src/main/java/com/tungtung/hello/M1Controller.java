@@ -271,7 +271,7 @@ public class M1Controller {
                     WHERE status = 'completed'
                     GROUP BY uid
                 ) earnings ON u.uid = earnings.uid
-                WHERE phone_number = ?
+                WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?
                 """;
                 parameter = phoneNumber.trim();
             }
