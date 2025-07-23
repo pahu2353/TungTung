@@ -9,6 +9,7 @@ import ListingsContainer from "@/components/listings-container";
 import LoadingIndicator from "@/components/loading-indicator";
 import CreateListingModal from "@/components/create-listing-modal";
 import type { Listing } from "@/components/listings-container";
+import { useUser } from "./UserContext";
 
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
@@ -24,7 +25,9 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
-  const [user, setUser] = useState<any>(null);
+  // Auth state
+  // const [user, setUser] = useState<any>(null);
+  const { user, setUser } = useUser(); // Replace local user state with context
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [authForm, setAuthForm] = useState({
@@ -37,13 +40,13 @@ export default function Home() {
 
   const [showCreateListingModal, setShowCreateListingModal] = useState(false);
 
-  // Use localStorage to check if user is logged in
+  // Use localStorage to check if user is logged in, update to use context setuser
   useEffect(() => {
     const savedUser = localStorage.getItem("tungTungUser");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-  }, []);
+  }, [setUser]);
 
   const handleGetTaskCategories = async () => {
     try {

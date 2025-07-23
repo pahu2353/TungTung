@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -362,29 +364,45 @@ public class M1Controller {
 
     //assign user to listing
     @PostMapping("/listings/{listid}/assign/{uid}")
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public ResponseEntity<String> assignTask(@PathVariable int listid, @PathVariable int uid) {
         try {
+            // Lock the listing row with FOR UPDATE, prevents concurrent assignment
+            String checkListingSql = "SELECT status, capacity FROM Listings WHERE listid = ? FOR UPDATE";
+            Map<String, Object> listing;
+            
+            try {
+                listing = jdbc.queryForMap(checkListingSql, listid);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Listing not found.");
+            }
+            
             //check if listing is open
-            String statusSql = "SELECT status FROM Listings WHERE listid = ?";
-            String status = jdbc.queryForObject(statusSql, String.class, listid);
+            String status = (String) listing.get("status");
             if (!"open".equalsIgnoreCase(status)) {
                 return ResponseEntity.badRequest().body("Listing is not open.");
             }
-
-            //check if user is the poster
+            
+            //check if user is the poster (also with lock)
             String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
             int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, uid);
             if (isPoster > 0) {
                 return ResponseEntity.badRequest().body("You cannot take your own task.");
             }
-
-            //check if listing is full
-            String countSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ?";
+            
+            // checks if user already assigned
+            String alreadyAssignedSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(alreadyAssignedSql, Integer.class, listid, uid);
+            if (isAssigned > 0) {
+                return ResponseEntity.badRequest().body("You are already assigned to this task.");
+            }
+            
+            // Check if listing is full, for update prevents race conditions
+            String countSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? FOR UPDATE";
             int assigned = jdbc.queryForObject(countSql, Integer.class, listid);
-
-            String capacitySql = "SELECT capacity FROM Listings WHERE listid = ?";
-            int capacity = jdbc.queryForObject(capacitySql, Integer.class, listid);
-
+            
+            int capacity = ((Number) listing.get("capacity")).intValue();
+            
             if (assigned >= capacity) {
                 return ResponseEntity.badRequest().body("Task already full.");
             }
