@@ -2,6 +2,7 @@
 
 import ReviewsList from "./reviews-list";
 import { toast } from "react-hot-toast";
+import { useState, useEffect } from "react";
 
 interface Listing {
   listid: number;
@@ -30,6 +31,7 @@ interface ListingCardProps {
   userNames: { [key: number]: string };
   onExpand: (listingId: number) => void;
   user: { uid: number; name: string } | null;
+  onStatusUpdate?: (listid: number, updated: Listing) => void;
 }
 
 export default function ListingCard({
@@ -39,7 +41,10 @@ export default function ListingCard({
   userNames,
   onExpand,
   user,
+  onStatusUpdate,
 }: ListingCardProps) {
+  const [isAssigned, setIsAssigned] = useState(false);
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "open":
@@ -53,17 +58,46 @@ export default function ListingCard({
     }
   };
 
+  useEffect(() => {
+    const checkAssigned = async () => {
+      if (!user) return;
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const data = await res.json();
+        const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
+        setIsAssigned(uids.includes(user.uid));
+      } catch (err) {
+        console.error("Failed to fetch assigned users:", err);
+        setIsAssigned(false);
+      }
+    };
+
+    checkAssigned();
+  }, [user, listing.listid, listing.status]); // Re-check if listing changes
+
   const handleAcceptTask = async () => {
+    if (!user) return;
+
     try {
       const response = await fetch(
-        `http://localhost:8080/listings/${listing.listid}/assign/${user?.uid}`,
+        `http://localhost:8080/listings/${listing.listid}/assign/${user.uid}`,
         { method: "POST" }
       );
       const message = await response.text();
 
       if (response.ok) {
         toast.success(message || "Successfully assigned task!");
-        setTimeout(() => window.location.reload(), 1500); // Wait for toast before reload
+
+        // Get updated listing
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}`);
+        const updated = await res.json();
+        onStatusUpdate?.(listing.listid, updated); // tell parent
+
+        // Re-check assignment
+        const check = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const data = await check.json();
+        const uids = Array.isArray(data) ? data.map((row: any) => row.uid ?? row) : [];
+        setIsAssigned(uids.includes(user.uid));
       } else {
         toast.error(message || "Unable to assign task.");
       }
@@ -74,7 +108,6 @@ export default function ListingCard({
 
   return (
     <div className="bg-white dark:bg-gray-700 rounded-lg border overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* listing header */}
       <div
         className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         onClick={() => onExpand(listing.listid)}
@@ -91,50 +124,61 @@ export default function ListingCard({
                 {listing.status.toUpperCase()}
               </span>
 
-              {/* accept task button */}
-              {listing.status === "open" && user && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAcceptTask();
-                }}
-                title="Accept Task"
-                className="relative bg-[oklch(0.828_0.189_84.4)] hover:bg-[oklch(0.828_0.189_84.4/90%)] rounded-full transition-all duration-200 overflow-hidden group h-5 w-5 hover:w-24 hover:flex hover:items-center hover:justify-center hover:pr-2 ml-auto"
-                >
-                <svg
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 transition-opacity duration-200 group-hover:opacity-0"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>                
-                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <svg
-                    className="w-3 h-3 flex-shrink-0"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
+              {user && (
+                isAssigned ? (
+                  <span
+                    title="You have already accepted this task"
+                    className="ml-auto px-2 py-[3px] border border-green-600 text-green-700 text-[10px] font-medium rounded-full bg-white dark:bg-transparent cursor-default select-none"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="ml-1 text-[10px] font-medium whitespace-nowrap text-white">
-                    Accept Task
+                    Accepted
                   </span>
-                </div>
-              </button>
-            )}
+                ) : (
+                  listing.status === "open" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAcceptTask();
+                      }}
+                      title="Accept Task"
+                      className="relative bg-[oklch(0.828_0.189_84.4)] hover:bg-[oklch(0.828_0.189_84.4/90%)] rounded-full transition-all duration-200 overflow-hidden group h-5 w-5 hover:w-24 hover:flex hover:items-center hover:justify-center hover:pr-2 ml-auto"
+                    >
+                      <svg
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 transition-opacity duration-200 group-hover:opacity-0"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <svg
+                          className="w-3 h-3 flex-shrink-0"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span className="ml-1 text-[10px] font-medium whitespace-nowrap text-white">
+                          Accept Task
+                        </span>
+                      </div>
+                    </button>
+                  )
+                )
+              )}
             </div>
+
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
               {listing.description}
             </p>
@@ -170,16 +214,12 @@ export default function ListingCard({
       {isExpanded && (
         <div className="border-t bg-gray-50 dark:bg-gray-800">
           <div className="p-4 space-y-4">
-            <div>
-              <h5 className="font-semibold mb-3">Reviews:</h5>
-              {reviews ? (
-                <ReviewsList reviews={reviews} userNames={userNames} />
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">
-                  Loading reviews...
-                </p>
-              )}
-            </div>
+            <h5 className="font-semibold mb-3">Reviews:</h5>
+            {reviews ? (
+              <ReviewsList reviews={reviews} userNames={userNames} />
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">Loading reviews...</p>
+            )}
           </div>
         </div>
       )}
