@@ -2,6 +2,7 @@ package com.tungtung.hello;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,7 +164,6 @@ public class M1Controller {
         return jdbc.queryForObject(sql, String.class, uid);
     }
 
-    // fix this
     @GetMapping("/db/seed")
     public Boolean seedDatabase() {
         Seed seed = new Seed(this.jdbc); 
@@ -175,6 +175,26 @@ public class M1Controller {
         }
         return true;
     }
+
+    @CrossOrigin(origins = "http://localhost:3000")
+    @PostMapping("/preferences/{uid}")
+    public Boolean postPreferences(@PathVariable int uid, @RequestBody List<Integer> preferences) {
+        try {
+            String sql = "INSERT INTO InterestedIn (uid, category_id) VALUES (?, ?)";
+
+            List<Object[]> batchParams = new ArrayList<>();
+            for (Integer categoryId : preferences) {
+                batchParams.add(new Object[]{uid, categoryId});
+            }
+
+            jdbc.batchUpdate(sql, batchParams);
+        } catch (Exception e) {
+            System.err.println(e);
+            return false;
+        }
+        return true;
+    }
+
 
     // Create user's account
     @CrossOrigin(origins = "http://localhost:3000")
@@ -205,6 +225,25 @@ public class M1Controller {
                 return ResponseEntity.badRequest().body(response);
             }
 
+            // Check duplicates
+            if (email != null && !email.isEmpty()) {
+                String checkEmailSql = "SELECT COUNT(*) FROM Users WHERE email = ?";
+                int emailCount = jdbc.queryForObject(checkEmailSql, Integer.class, email);
+                if (emailCount > 0) {
+                    response.put("error", "Email is already registered");
+                    return ResponseEntity.badRequest().body(response);
+                }
+            }
+
+            if (phoneNumber != null && !phoneNumber.isEmpty()) {
+                String checkPhoneSql = "SELECT COUNT(*) FROM Users WHERE phone_number = ?";
+                int phoneCount = jdbc.queryForObject(checkPhoneSql, Integer.class, phoneNumber);
+                if (phoneCount > 0) {
+                    response.put("error", "Phone number is already registered");
+                    return ResponseEntity.badRequest().body(response);
+                }
+            }
+
             // Generate profile picture path
             int hash = Math.abs(name.hashCode());
             int catNumber = (hash % 7) + 1; // Ensure the result is between 1 and 7
@@ -228,16 +267,17 @@ public class M1Controller {
             int newUid = keyHolder.getKey().intValue();
 
             response.put("uid", newUid);
-            response.put("name", name.trim());
-            response.put("email", email.trim());
+            response.put("name", name);
+            response.put("email", email);
             response.put("phone_number", phoneNumber);
             response.put("profile_picture", profilePicture); 
+            response.put("total_earnings", 0);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            logger.error("Error during signup: {}", e.getMessage(), e); // Log the exception
-
-            response.put("error", "Either the email already exists or you have invalid data. Try again!");
+            logger.error("Error during signup: {}", e.getMessage(), e);
+            
+            response.put("error", "An error occurred during registration. Please try again.");
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -246,6 +286,12 @@ public class M1Controller {
     // so check if it's an email before we query
     private boolean isEmail(String input) {
         return input != null && input.contains("@") && input.contains(".");
+    }
+
+    private String normalizePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) return null;
+        // Removes spaces, hyphens, parentheses
+        return phoneNumber.replaceAll("[\\s\\-\\(\\)\\+]", "");
     }
 
     // Log user in
@@ -262,17 +308,19 @@ public class M1Controller {
             String password = loginData.get("password");
             String hashedPassword = Hasher.hashPassword(password);
 
-            logger.info("Parsed login data - Email: {}, Phone Number: {}, Hashed Password: {}", email, phoneNumber, hashedPassword);
-            
             // clean values to trim whitespace
-            if (email != null)
+            if (email != null) {
                 email = email.trim();
-            if (phoneNumber != null)
+            }
+            if (phoneNumber != null) {
                 phoneNumber = phoneNumber.trim();
+                phoneNumber = normalizePhoneNumber(phoneNumber);
+            }
+
+            logger.info("Parsed login data - Email: {}, Phone Number: {}, Hashed Password: {}", email, phoneNumber, hashedPassword);
 
             // Allow users to log in either with email or with phone number
-            if ((email == null || email.trim().isEmpty()) &&
-                    (phoneNumber == null || phoneNumber.trim().isEmpty())) {
+            if ((email == null || email.isEmpty()) && (phoneNumber == null || phoneNumber.isEmpty())) {
                 response.put("error", "Email or phone number is required");
                 return ResponseEntity.badRequest().body(response);
             }
@@ -287,30 +335,37 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = "SELECT * FROM Users WHERE email = ?";
+                sql = "SELECT uid, password FROM Users WHERE email = ?";
                 parameter = email.trim();
             } else {
-                sql = "SELECT * FROM Users WHERE phone_number = ?";
+                sql = "SELECT uid, password FROM Users WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone_number, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') = ?";
                 parameter = phoneNumber.trim();
             }
 
-            Map<String, Object> user = jdbc.queryForMap(sql, parameter);
+            Map<String, Object> credentials = jdbc.queryForMap(sql, parameter);
             
             // check for password
-            if (!hashedPassword.equals(user.get("password"))) {
+            if (!hashedPassword.equals(credentials.get("password"))) {
                 response.put("error", "Incorrect credentials");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            logger.info("Login successful for user: {}", user);
+            // call getUserProfile to populate their profile
+            int uid = ((Number) credentials.get("uid")).intValue();
+            ResponseEntity<Map<String, Object>> profileResponse = getUserProfile(uid);
+            
+            if (profileResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.ok(profileResponse.getBody());
+            } else {
+                return profileResponse;
+            }
 
-            return ResponseEntity.ok(user);
-
-        } catch (Exception e) {
-            response.put("error", "User not found");
-            return ResponseEntity.badRequest().body(response);
-        }
+    } catch (Exception e) {
+        logger.error("Login error: {}", e.getMessage(), e);
+        response.put("error", "User not found");
+        return ResponseEntity.badRequest().body(response);
     }
+}
 
     // Create new listing
     @CrossOrigin(origins = "http://localhost:3000")
@@ -489,10 +544,255 @@ public class M1Controller {
         }
     }
 
+    //unassign user from listing
+    @PostMapping("/listings/{listid}/unassign/{uid}")
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ResponseEntity<String> unassignTask(@PathVariable int listid, @PathVariable int uid) {
+        try {
+            // Lock the listing row with FOR UPDATE, prevents concurrent changes
+            String checkListingSql = "SELECT status FROM Listings WHERE listid = ? FOR UPDATE";
+            Map<String, Object> listing;
+            
+            try {
+                listing = jdbc.queryForMap(checkListingSql, listid);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Listing not found.");
+            }
+            
+            // Check if listing is in a state that allows unassignment
+            String status = (String) listing.get("status");
+            if ("completed".equalsIgnoreCase(status) || "cancelled".equalsIgnoreCase(status)) {
+                return ResponseEntity.badRequest().body("Cannot unassign from a completed or cancelled listing.");
+            }
+            
+            // Check if the user is actually assigned to this listing
+            String checkAssignedSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(checkAssignedSql, Integer.class, listid, uid);
+            
+            if (isAssigned == 0) {
+                return ResponseEntity.badRequest().body("You are not assigned to this task.");
+            }
+            
+            // Remove the assignment
+            String deleteSql = "DELETE FROM AssignedTo WHERE listid = ? AND uid = ?";
+            jdbc.update(deleteSql, listid, uid);
+            
+            // Update the listing status back to open if currently taken
+            if ("taken".equalsIgnoreCase(status)) {
+                String updateStatusSql = "UPDATE Listings SET status = 'open' WHERE listid = ?";
+                jdbc.update(updateStatusSql, listid);
+            }
+            
+            return ResponseEntity.ok("Successfully unassigned from task.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
+
     //get assigned users for each listing
     @GetMapping("/listings/{listid}/assigned-users")
-    public List<Integer> getAssignedUserIds(@PathVariable int listid) {
-        String sql = "SELECT uid FROM AssignedTo WHERE listid = ?";
-        return jdbc.query(sql, (rs, rowNum) -> rs.getInt("uid"), listid);
+    public List<Map<String, Object>> getAssignedUsers(@PathVariable int listid) {
+        String sql = "SELECT U.uid, U.name, U.profile_picture FROM AssignedTo A JOIN Users U ON A.uid = U.uid WHERE A.listid = ?";
+        return jdbc.queryForList(sql, listid);
+    }
+
+    @CrossOrigin(origins = "http://localhost:3000")
+    @GetMapping("/profile/{uid}")
+    public ResponseEntity<Map<String, Object>> getUserProfile(@PathVariable("uid") int uid) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Total earnings
+            String userSql = """
+                SELECT * FROM Users u LEFT OUTER JOIN (
+                    SELECT SUM(price) total_earnings, uid
+                    FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+                    WHERE status = 'completed'
+                    GROUP BY uid
+                ) earnings ON u.uid = earnings.uid
+                WHERE u.uid = ?
+            """;
+            
+            Map<String, Object> user = jdbc.queryForMap(userSql, uid);
+            
+            // We don't need password (and it's bad security to include it D:)
+            user.remove("password");
+            
+            String reviewSql = """
+                SELECT r.*, u.name AS reviewer_name, listing_name FROM Reviews r 
+                JOIN Users u ON r.reviewer_uid = u.uid 
+                JOIN Listings l ON r.listid = l.listid
+                WHERE reviewee_uid = ?
+            """;
+            List<Map<String, Object>> reviews = jdbc.queryForList(reviewSql, uid);
+            user.put("reviews", reviews);
+            
+            // Get listings that user created
+            String createdListingsSql = """
+                SELECT l.* 
+                FROM Listings l 
+                JOIN Posts p ON l.listid = p.listid 
+                WHERE p.uid = ?
+            """;
+            List<Map<String, Object>> createdListings = jdbc.queryForList(createdListingsSql, uid);
+            user.put("created_listings", createdListings);
+            
+            // Get listings assigned to this user
+            String assignedListingsSql = """
+                SELECT l.* 
+                FROM Listings l 
+                JOIN AssignedTo a ON l.listid = a.listid 
+                WHERE a.uid = ?
+            """;
+            List<Map<String, Object>> assignedListings = jdbc.queryForList(assignedListingsSql, uid);
+            user.put("assigned_listings", assignedListings);
+            
+            return ResponseEntity.ok(user);
+            
+        } catch (Exception e) {
+            logger.error("Error fetching user profile: {}", e.getMessage(), e);
+            response.put("error", "User not found");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Mark a listing as complete
+    @PostMapping("/listings/{listid}/complete")
+    public ResponseEntity<String> markListingComplete(@PathVariable int listid, @RequestBody Map<String, Integer> requestBody) {
+        try {
+            Integer posterUid = requestBody.get("poster_uid");
+            
+            if (posterUid == null) {
+                return ResponseEntity.badRequest().body("User ID is required");
+            }
+            
+            // Make sure we're the poster (otherwise you can't mark as complete obviously)
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, posterUid);
+            
+            if (isPoster == 0) {
+                return ResponseEntity.badRequest().body("Only the task creator can mark it as complete");
+            }
+            
+            String statusSql = "SELECT status FROM Listings WHERE listid = ?";
+            String currentStatus = jdbc.queryForObject(statusSql, String.class, listid);
+            
+            if ("completed".equals(currentStatus) || "cancelled".equals(currentStatus)) {
+                return ResponseEntity.badRequest().body("This task is already marked as " + currentStatus);
+            }
+            
+            if (!"taken".equals(currentStatus)) {
+                return ResponseEntity.badRequest().body("This task must be assigned to someone before marking as complete");
+            }
+            
+            // Update the status to completed
+            String updateSql = "UPDATE Listings SET status = 'completed' WHERE listid = ?";
+            jdbc.update(updateSql, listid);
+            
+            return ResponseEntity.ok("Task marked as complete");
+        } catch (Exception e) {
+            logger.error("Error marking listing as complete: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
+
+    // Create a review (after a posting is completed)
+    // Triggers ensure that reviewer is the person who posted
+    @PostMapping("/reviews")
+    public ResponseEntity<Map<String, Object>> createReview(@RequestBody Map<String, Object> reviewData) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Integer listid = (Integer) reviewData.get("listid");
+            Integer reviewerUid = (Integer) reviewData.get("reviewer_uid");
+            Integer revieweeUid = (Integer) reviewData.get("reviewee_uid");
+            Integer rating = (Integer) reviewData.get("rating");
+            String comment = (String) reviewData.get("comment");
+            
+            if (listid == null || reviewerUid == null || revieweeUid == null || rating == null) {
+                response.put("error", "Missing required fields");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (rating < 1 || rating > 5) {
+                response.put("error", "Rating must be between 1 and 5");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (reviewerUid.equals(revieweeUid)) {
+                response.put("error", "You cannot review yourself");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if listing exists and is completed
+            String listingSql = "SELECT status FROM Listings WHERE listid = ?";
+            String listingStatus;
+            try {
+                listingStatus = jdbc.queryForObject(listingSql, String.class, listid);
+            } catch (Exception e) {
+                response.put("error", "Listing not found");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (!"completed".equals(listingStatus)) {
+                response.put("error", "Only completed listings can be reviewed");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Some checks, though we also have triggers
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, reviewerUid);
+            
+            if (isPoster == 0) {
+                response.put("error", "Only the task creator can leave reviews");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if reviewee was assigned to the listing
+            String assignedCheckSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(assignedCheckSql, Integer.class, listid, revieweeUid);
+            
+            if (isAssigned == 0) {
+                response.put("error", "You can only review users who were assigned to this task");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if review already exists
+            String reviewExistsSql = "SELECT COUNT(*) FROM Reviews WHERE listid = ? AND reviewer_uid = ? AND reviewee_uid = ?";
+            int reviewExists = jdbc.queryForObject(reviewExistsSql, Integer.class, listid, reviewerUid, revieweeUid);
+            
+            if (reviewExists > 0) {
+                // Update existing review
+                String updateSql = "UPDATE Reviews SET rating = ?, comment = ?, timestamp = CURRENT_TIMESTAMP WHERE listid = ? AND reviewer_uid = ? AND reviewee_uid = ?";
+                jdbc.update(updateSql, rating, comment, listid, reviewerUid, revieweeUid);
+                
+                response.put("message", "Review updated successfully");
+            } else {
+                // Insert new review
+                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment) VALUES (?, ?, ?, ?, ?)";
+                jdbc.update(insertSql, listid, reviewerUid, revieweeUid, rating, comment);
+                
+                response.put("message", "Review submitted successfully");
+            }
+            
+            // Update user's overall rating
+            String updateRatingSql = """
+                UPDATE Users
+                SET overall_rating = (
+                    SELECT AVG(rating)
+                    FROM Reviews
+                    WHERE reviewee_uid = ?
+                )
+                WHERE uid = ?
+            """;
+            jdbc.update(updateRatingSql, revieweeUid, revieweeUid);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error creating review: {}", e.getMessage(), e);
+            response.put("error", "Failed to submit review");
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 }

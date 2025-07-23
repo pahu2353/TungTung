@@ -2,6 +2,7 @@
 
 interface TaskCategory {
   category_name: string;
+  category_id: number
 }
 
 interface CategoryFiltersProps {

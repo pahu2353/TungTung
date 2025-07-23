@@ -10,6 +10,7 @@ import LoadingIndicator from "@/components/loading-indicator";
 import CreateListingModal from "@/components/create-listing-modal";
 import type { Listing } from "@/components/listings-container";
 import { useUser } from "./UserContext";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
@@ -30,6 +31,8 @@ export default function Home() {
   const { user, setUser } = useUser(); // Replace local user state with context
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
+  const [isOnboarding, setIsOnboarding] = useState(false);
+  const [onboardingCategories, setOnboardingCategories] = useState<number[]>([])
   const [authForm, setAuthForm] = useState({
     name: "",
     email: "",
@@ -39,6 +42,23 @@ export default function Home() {
   });
 
   const [showCreateListingModal, setShowCreateListingModal] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const search = searchParams.get("search");
+    const expand = searchParams.get("expand");
+
+    if (search) {
+      setSearchQuery(search); 
+    }
+    if (expand) {
+      const listingIdToExpand = Number(expand);
+      if (listingIdToExpand && expandedListing !== listingIdToExpand) {
+        handleExpandListing(listingIdToExpand);
+      }
+    }
+  }, [listings, searchParams]);
 
   // Use localStorage to check if user is logged in, update to use context setuser
   useEffect(() => {
@@ -180,7 +200,11 @@ export default function Home() {
         setUser(data);
         // log user details
         console.log("Logged in user details:", data);
-        setShowAuthModal(false);
+        if (!isSignup) {
+          setShowAuthModal(false);
+        } else {
+          setIsOnboarding(true)
+        }
         setAuthForm({ name: "", email: "", phone_number: "", contact: "", password: "" });
       } else {
         alert(data.error || "Authentication failed");
@@ -189,6 +213,27 @@ export default function Home() {
       alert("Network error");
     }
   };
+
+  const handleUserPreferences = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (onboardingCategories.length === 0) {
+      // show error toast
+      return
+    }
+    try {
+      const url = `http://localhost:8080/preferences/${user.uid}`
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(onboardingCategories),
+      });
+      setShowAuthModal(false)
+      setIsOnboarding(false)
+      setOnboardingCategories([])
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("tungTungUser");
@@ -300,6 +345,12 @@ export default function Home() {
           onToggleMode={() => setIsSignup(!isSignup)}
           onFormChange={handleAuthFormChange}
           onSubmit={handleAuth}
+          isOnboarding={isOnboarding}
+          onOnboardingSubmit={handleUserPreferences}
+          onOnboardingChange={setOnboardingCategories}
+          setShowModal={setShowAuthModal}
+          setIsOnboarding={setIsOnboarding}
+          taskCategories={taskCategories}
         />
 
         <CreateListingModal
