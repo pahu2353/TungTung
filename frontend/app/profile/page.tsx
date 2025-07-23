@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"; // Add useEffect import
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,16 +10,14 @@ import { Wrench, NotebookPen, House, Star, MapPin, Clock, DollarSign, Calendar, 
 import { useUser } from "../UserContext";
 
 export default function ProfilePage() {
-//   const user = {
-//     name: "Sarah Johnson",
-//     email: "sarah.johnson@email.com",
-//     phone: "+1 (555) 123-4567",
-//     profilePicture: null, // Will show initials fallback
-//     overallRating: 4.8,
-//     totalEarnings: 2450.75,
-//   };
+  const { user, setUser } = useUser();
 
-  const { user } = useUser();
+  useEffect(() => {
+    const savedUser = localStorage.getItem("tungTungUser");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, [setUser]);
 
   if (!user) {
     return (
