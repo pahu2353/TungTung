@@ -751,9 +751,9 @@ export default function GraphPage() {
       }
 
       // Apply extra size boost for the node with the highest score
-      if (listing === highestScoreListing) {
-        size += 0.4; // Add an extra size boost
-      }
+    //   if (listing === highestScoreListing) {
+    //     size += 0.3; // Add an extra size boost
+    //   }
       
       nodes.push({
         id: `listing_${listing.listid}`,
