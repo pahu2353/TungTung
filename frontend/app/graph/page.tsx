@@ -715,12 +715,13 @@ export default function GraphPage() {
       
       // Normalize the score to 0-1 range for glow calculation
       const normalizedScore = scoreRange > 0 ? (listing.match_score - minScore) / scoreRange : 0;
+      const scaledScore = Math.pow(normalizedScore, 2); // Quadratic scaling
       
       switch (listing.status) {
         case 'open':
           color = '#48cc6c'; // Bright pastel green
-          glowIntensity = Math.max(0.5, normalizedScore * 1.2); // Stronger glow
-          size = 0.08 + (normalizedScore * 0.1); // Size varies from 0.08 to 0.14 for open listings only
+          glowIntensity = Math.max(0.5, scaledScore * 1.1); // Stronger glow
+          size = 0.08 + (scaledScore * 0.4); // Size varies from 0.08 to 0.14 for open listings only
           break;
         case 'taken':
           color = '#ff6666'; // Brighter red
