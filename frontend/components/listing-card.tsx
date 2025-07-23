@@ -1,6 +1,7 @@
 "use client";
 
 import ReviewsList from "./reviews-list";
+import { toast } from "react-hot-toast";
 
 interface Listing {
   listid: number;
@@ -59,10 +60,15 @@ export default function ListingCard({
         { method: "POST" }
       );
       const message = await response.text();
-      alert(message);
-      window.location.reload();
+
+      if (response.ok) {
+        toast.success(message || "Successfully assigned task!");
+        setTimeout(() => window.location.reload(), 1500); // Wait for toast before reload
+      } else {
+        toast.error(message || "Unable to assign task.");
+      }
     } catch (error) {
-      alert("Network error while assigning task.");
+      toast.error("Network error while assigning task.");
     }
   };
 
