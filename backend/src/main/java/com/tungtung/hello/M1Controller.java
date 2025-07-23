@@ -696,6 +696,13 @@ public class M1Controller {
         }
     }
 
+    // Get poster info for a listing
+    @GetMapping("/listings/{listid}/poster")
+    public Map<String, Object> getListingPoster(@PathVariable int listid) {
+        String sql = "SELECT U.uid, U.name, U.profile_picture FROM Posts P JOIN Users U ON P.uid = U.uid WHERE P.listid = ?";
+        return jdbc.queryForMap(sql, listid);
+    }
+
     // Create a review (after a posting is completed)
     // Triggers ensure that reviewer is the person who posted
     @PostMapping("/reviews")
