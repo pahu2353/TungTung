@@ -369,7 +369,7 @@ function CameraController({
       
       // Heights for smooth vertical movement
       const startHeight = camera.position.y;
-      const endHeight = orbitCenter.y + 1;
+      const endHeight = orbitCenter.y;
       
       // Start animation from current camera position
       animationRef.current = {
@@ -838,6 +838,8 @@ export default function GraphPage() {
                 <div><strong>Rating:</strong> {selectedNode.data.overall_rating || 'N/A'}</div>
                 <Link 
                 href={`/profile?uid=${selectedNode.data.uid}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
                 className="inline-flex items-center justify-center mt-4 px-4 py-2 bg-white text-black font-medium rounded-md hover:bg-gray-200 transition"
                 >
                 View Profile
