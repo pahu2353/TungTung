@@ -1,6 +1,8 @@
 "use client";
 
 import ProfileIcon from "./profile-icon";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface User {
   name: string;
@@ -22,15 +24,23 @@ export default function Header({
   onLogout,
   onShowCreateListing 
 }: HeaderProps) {
+  const router = useRouter();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // This completely resets to the root URL, clearing any query params, hash, etc.
+    window.location.assign(window.location.origin + '/');
+  };
+
   return (
     <header className="row-start-1 flex gap-6 flex-wrap items-center justify-between w-full">
-      <div className="flex items-center gap-2">
+      <div onClick={handleLogoClick} className="flex items-center gap-2 cursor-pointer">
         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
           T
         </div>
         <span className="text-xl font-bold">TungTung</span>
       </div>
-      
+
       <div className="flex items-center gap-4">
         {user ? (
           <>

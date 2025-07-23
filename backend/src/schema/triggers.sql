@@ -56,7 +56,7 @@ BEGIN
   END IF;
 END$$
 
--- only assigned users can leave reviews
+-- only assigned users can be reviewed
 CREATE TRIGGER trg_enforce_assigned_reviewer
 BEFORE INSERT ON Reviews
 FOR EACH ROW
@@ -65,6 +65,23 @@ BEGIN
 
   SELECT COUNT(*) INTO is_assigned
   FROM AssignedTo
+  WHERE listid = NEW.listid AND uid = NEW.reviewee_uid;
+
+  IF is_assigned = 0 THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Only assigned users can leave reviews';
+  END IF;
+END$$
+
+-- only the poster can write reviews
+CREATE TRIGGER trg_enforce_review_writer
+BEFORE INSERT ON Reviews
+FOR EACH ROW
+BEGIN
+  DECLARE is_assigned INT;
+
+  SELECT COUNT(*) INTO is_assigned
+  FROM Posts
   WHERE listid = NEW.listid AND uid = NEW.reviewer_uid;
 
   IF is_assigned = 0 THEN
@@ -72,6 +89,7 @@ BEGIN
     SET MESSAGE_TEXT = 'Only assigned users can leave reviews';
   END IF;
 END$$
+
 
 -- prevent review unless listing is completed
 CREATE TRIGGER trg_check_listing_completed

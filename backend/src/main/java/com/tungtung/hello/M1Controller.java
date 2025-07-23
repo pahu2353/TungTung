@@ -483,6 +483,51 @@ public class M1Controller {
         }
     }
 
+    //unassign user from listing
+    @PostMapping("/listings/{listid}/unassign/{uid}")
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ResponseEntity<String> unassignTask(@PathVariable int listid, @PathVariable int uid) {
+        try {
+            // Lock the listing row with FOR UPDATE, prevents concurrent changes
+            String checkListingSql = "SELECT status FROM Listings WHERE listid = ? FOR UPDATE";
+            Map<String, Object> listing;
+            
+            try {
+                listing = jdbc.queryForMap(checkListingSql, listid);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Listing not found.");
+            }
+            
+            // Check if listing is in a state that allows unassignment
+            String status = (String) listing.get("status");
+            if ("completed".equalsIgnoreCase(status) || "cancelled".equalsIgnoreCase(status)) {
+                return ResponseEntity.badRequest().body("Cannot unassign from a completed or cancelled listing.");
+            }
+            
+            // Check if the user is actually assigned to this listing
+            String checkAssignedSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(checkAssignedSql, Integer.class, listid, uid);
+            
+            if (isAssigned == 0) {
+                return ResponseEntity.badRequest().body("You are not assigned to this task.");
+            }
+            
+            // Remove the assignment
+            String deleteSql = "DELETE FROM AssignedTo WHERE listid = ? AND uid = ?";
+            jdbc.update(deleteSql, listid, uid);
+            
+            // Update the listing status back to open if currently taken
+            if ("taken".equalsIgnoreCase(status)) {
+                String updateStatusSql = "UPDATE Listings SET status = 'open' WHERE listid = ?";
+                jdbc.update(updateStatusSql, listid);
+            }
+            
+            return ResponseEntity.ok("Successfully unassigned from task.");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
+
     //get assigned users for each listing
     @GetMapping("/listings/{listid}/assigned-users")
     public List<Map<String, Object>> getAssignedUsers(@PathVariable int listid) {
@@ -547,6 +592,146 @@ public class M1Controller {
             logger.error("Error fetching user profile: {}", e.getMessage(), e);
             response.put("error", "User not found");
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Mark a listing as complete
+    @PostMapping("/listings/{listid}/complete")
+    public ResponseEntity<String> markListingComplete(@PathVariable int listid, @RequestBody Map<String, Integer> requestBody) {
+        try {
+            Integer posterUid = requestBody.get("poster_uid");
+            
+            if (posterUid == null) {
+                return ResponseEntity.badRequest().body("User ID is required");
+            }
+            
+            // Make sure we're the poster (otherwise you can't mark as complete obviously)
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, posterUid);
+            
+            if (isPoster == 0) {
+                return ResponseEntity.badRequest().body("Only the task creator can mark it as complete");
+            }
+            
+            String statusSql = "SELECT status FROM Listings WHERE listid = ?";
+            String currentStatus = jdbc.queryForObject(statusSql, String.class, listid);
+            
+            if ("completed".equals(currentStatus) || "cancelled".equals(currentStatus)) {
+                return ResponseEntity.badRequest().body("This task is already marked as " + currentStatus);
+            }
+            
+            if (!"taken".equals(currentStatus)) {
+                return ResponseEntity.badRequest().body("This task must be assigned to someone before marking as complete");
+            }
+            
+            // Update the status to completed
+            String updateSql = "UPDATE Listings SET status = 'completed' WHERE listid = ?";
+            jdbc.update(updateSql, listid);
+            
+            return ResponseEntity.ok("Task marked as complete");
+        } catch (Exception e) {
+            logger.error("Error marking listing as complete: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Database error: " + e.getMessage());
+        }
+    }
+
+    // Create a review (after a posting is completed)
+    // Triggers ensure that reviewer is the person who posted
+    @PostMapping("/reviews")
+    public ResponseEntity<Map<String, Object>> createReview(@RequestBody Map<String, Object> reviewData) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Integer listid = (Integer) reviewData.get("listid");
+            Integer reviewerUid = (Integer) reviewData.get("reviewer_uid");
+            Integer revieweeUid = (Integer) reviewData.get("reviewee_uid");
+            Integer rating = (Integer) reviewData.get("rating");
+            String comment = (String) reviewData.get("comment");
+            
+            if (listid == null || reviewerUid == null || revieweeUid == null || rating == null) {
+                response.put("error", "Missing required fields");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (rating < 1 || rating > 5) {
+                response.put("error", "Rating must be between 1 and 5");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (reviewerUid.equals(revieweeUid)) {
+                response.put("error", "You cannot review yourself");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if listing exists and is completed
+            String listingSql = "SELECT status FROM Listings WHERE listid = ?";
+            String listingStatus;
+            try {
+                listingStatus = jdbc.queryForObject(listingSql, String.class, listid);
+            } catch (Exception e) {
+                response.put("error", "Listing not found");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (!"completed".equals(listingStatus)) {
+                response.put("error", "Only completed listings can be reviewed");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Some checks, though we also have triggers
+            String posterCheckSql = "SELECT COUNT(*) FROM Posts WHERE listid = ? AND uid = ?";
+            int isPoster = jdbc.queryForObject(posterCheckSql, Integer.class, listid, reviewerUid);
+            
+            if (isPoster == 0) {
+                response.put("error", "Only the task creator can leave reviews");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if reviewee was assigned to the listing
+            String assignedCheckSql = "SELECT COUNT(*) FROM AssignedTo WHERE listid = ? AND uid = ?";
+            int isAssigned = jdbc.queryForObject(assignedCheckSql, Integer.class, listid, revieweeUid);
+            
+            if (isAssigned == 0) {
+                response.put("error", "You can only review users who were assigned to this task");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Check if review already exists
+            String reviewExistsSql = "SELECT COUNT(*) FROM Reviews WHERE listid = ? AND reviewer_uid = ? AND reviewee_uid = ?";
+            int reviewExists = jdbc.queryForObject(reviewExistsSql, Integer.class, listid, reviewerUid, revieweeUid);
+            
+            if (reviewExists > 0) {
+                // Update existing review
+                String updateSql = "UPDATE Reviews SET rating = ?, comment = ?, timestamp = CURRENT_TIMESTAMP WHERE listid = ? AND reviewer_uid = ? AND reviewee_uid = ?";
+                jdbc.update(updateSql, rating, comment, listid, reviewerUid, revieweeUid);
+                
+                response.put("message", "Review updated successfully");
+            } else {
+                // Insert new review
+                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment) VALUES (?, ?, ?, ?, ?)";
+                jdbc.update(insertSql, listid, reviewerUid, revieweeUid, rating, comment);
+                
+                response.put("message", "Review submitted successfully");
+            }
+            
+            // Update user's overall rating
+            String updateRatingSql = """
+                UPDATE Users
+                SET overall_rating = (
+                    SELECT AVG(rating)
+                    FROM Reviews
+                    WHERE reviewee_uid = ?
+                )
+                WHERE uid = ?
+            """;
+            jdbc.update(updateRatingSql, revieweeUid, revieweeUid);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error creating review: {}", e.getMessage(), e);
+            response.put("error", "Failed to submit review");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 }

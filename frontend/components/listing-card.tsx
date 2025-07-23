@@ -1,11 +1,11 @@
 "use client";
 
 import ReviewsList from "./reviews-list";
-import { AssignedList } from "./assigned-list";
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
 
 interface Listing {
   listid: number;
@@ -109,18 +109,20 @@ export default function ListingCard({
       fetchAssignedUsers();
     }, [isExpanded, listing.listid]);
 
-  const handleAcceptTask = async () => {
+  const handleToggleAssignment = async () => {
     if (!user) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/listings/${listing.listid}/assign/${user.uid}`,
-        { method: "POST" }
-      );
+      // Assign or unassign depending on current state
+      const endpoint = isAssigned 
+        ? `http://localhost:8080/listings/${listing.listid}/unassign/${user.uid}`
+        : `http://localhost:8080/listings/${listing.listid}/assign/${user.uid}`;
+      
+      const response = await fetch(endpoint, { method: "POST" });
       const message = await response.text();
 
       if (response.ok) {
-        toast.success(message || "Successfully assigned task!");
+        toast.success(message || `Successfully ${isAssigned ? "unassigned from" : "assigned to"} task!`);
 
         // Get updated listing
         const res = await fetch(`http://localhost:8080/listings/${listing.listid}`);
@@ -134,15 +136,11 @@ export default function ListingCard({
         const uids = Array.isArray(assignedData) ? assignedData.map((row: any) => row.uid ?? row) : [];
         setIsAssigned(uids.includes(user.uid));
 
-        // Optionally, re-fetch reviews if you want to update them too
-        // const reviewsRes = await fetch(`http://localhost:8080/listings/${listing.listid}/reviews`);
-        // const reviewsData = await reviewsRes.json();
-        // setReviews(reviewsData); // If you have a setReviews state
       } else {
-        toast.error(message || "Unable to assign task.");
+        toast.error(message || `Unable to ${isAssigned ? "unassign from" : "assign to"} task.`);
       }
     } catch (error) {
-      toast.error("Network error while assigning task.");
+      toast.error(`Network error while ${isAssigned ? "unassigning from" : "assigning to"} task.`);
     }
   };
 
@@ -166,18 +164,22 @@ export default function ListingCard({
 
               {user && (
                 isAssigned ? (
-                  <span
-                    title="You have already accepted this task"
-                    className="ml-auto px-2 py-[3px] border border-green-600 text-green-700 text-[10px] font-medium rounded-full bg-white dark:bg-transparent cursor-default select-none"
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleAssignment();
+                    }}
+                    title="Unassign from Task"
+                    className="ml-auto px-2 py-[3px] border border-amber-500 text-amber-600 hover:bg-amber-50 text-[10px] font-medium rounded-full transition-colors cursor-pointer select-none"
                   >
-                    Accepted
-                  </span>
+                    Accepted ✓
+                  </button>
                 ) : (
                   listing.status === "open" && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAcceptTask();
+                        handleToggleAssignment();
                       }}
                       title="Accept Task"
                       className="relative bg-[oklch(0.828_0.189_84.4)] hover:bg-[oklch(0.828_0.189_84.4/90%)] rounded-full transition-all duration-200 overflow-hidden group h-5 w-5 hover:w-24 hover:flex hover:items-center hover:justify-center hover:pr-2 ml-auto"
@@ -266,14 +268,16 @@ export default function ListingCard({
                       const { firstName, lastName } = splitName(assigned.name || '');
                       return (
                         <div key={assigned.uid} className="flex flex-col items-center min-w-[80px]">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
-                            <AvatarFallback>
-                              {assigned.name
-                                ? assigned.name.split(" ").map((n) => n[0]).join("")
-                                : "?"}
-                            </AvatarFallback>
-                          </Avatar>
+                          <Link href={`/profile?uid=${assigned.uid}`}>
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
+                              <AvatarFallback>
+                                {assigned.name
+                                  ? assigned.name.split(" ").map((n) => n[0]).join("")
+                                  : "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Link>  
                           <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
                             <div className="font-medium">{firstName}</div>
                             {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
