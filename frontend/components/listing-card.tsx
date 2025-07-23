@@ -49,6 +49,7 @@ export default function ListingCard({
   const [isAssigned, setIsAssigned] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<{ uid: number; name: string; profile_picture: string }[]>([]);
   const [poster, setPoster] = useState<{ uid: number; name: string; profile_picture: string } | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -108,21 +109,34 @@ export default function ListingCard({
     fetchPoster();
 }, [isExpanded, listing.listid]);
 
-    // Fetch assigned users with name and profile picture when expanded
-    useEffect(() => {
-      const fetchAssignedUsers = async () => {
-        if (!isExpanded) return;
-        try {
-          const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
-          const data = await res.json();
-          // Expect data: [{ uid, name, profile_picture }]
-          setAssignedUsers(Array.isArray(data) ? data : []);
-        } catch (err) {
-          setAssignedUsers([]);
-        }
-      };
-      fetchAssignedUsers();
-    }, [isExpanded, listing.listid]);
+  // Fetch assigned users with name and profile picture when expanded
+  useEffect(() => {
+    const fetchAssignedUsers = async () => {
+      if (!isExpanded) return;
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/assigned-users`);
+        const data = await res.json();
+        // Expect data: [{ uid, name, profile_picture }]
+        setAssignedUsers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setAssignedUsers([]);
+      }
+    };
+    fetchAssignedUsers();
+  }, [isExpanded, listing.listid]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/listings/${listing.listid}/categories`);
+        const data = await res.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, [listing.listid]);
 
   const handleToggleAssignment = async () => {
     if (!user) return;
@@ -258,7 +272,19 @@ export default function ListingCard({
                 <strong>Deadline:</strong>{" "}
                 {new Date(listing.deadline).toLocaleString()}
               </span>
-            </div>
+            </div>      
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {categories.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 rounded-full border border-gray-300 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="ml-4">
             <span className="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">

@@ -733,6 +733,17 @@ public class M1Controller {
         return jdbc.queryForMap(sql, listid);
     }
 
+    @GetMapping("/listings/{listid}/categories")
+    public List<String> getListingCategories(@PathVariable int listid) {
+        String sql = """
+            SELECT T.category_name
+            FROM BelongsTo B
+            JOIN TaskCategories T ON B.category_id = T.category_id
+            WHERE B.listid = ?
+        """;
+        return jdbc.queryForList(sql, String.class, listid);
+    }
+
     // Create a review (after a posting is completed)
     // Triggers ensure that reviewer is the person who posted
     @PostMapping("/reviews")
