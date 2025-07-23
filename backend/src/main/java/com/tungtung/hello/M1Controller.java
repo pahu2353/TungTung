@@ -2,6 +2,7 @@ package com.tungtung.hello;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +103,6 @@ public class M1Controller {
         return jdbc.queryForObject(sql, String.class, uid);
     }
 
-    // fix this
     @GetMapping("/db/seed")
     public Boolean seedDatabase() {
         Seed seed = new Seed(this.jdbc); 
@@ -114,6 +114,26 @@ public class M1Controller {
         }
         return true;
     }
+
+    @CrossOrigin(origins = "http://localhost:3000")
+    @PostMapping("/preferences/{uid}")
+    public Boolean postPreferences(@PathVariable int uid, @RequestBody List<Integer> preferences) {
+        try {
+            String sql = "INSERT INTO InterestedIn (uid, category_id) VALUES (?, ?)";
+
+            List<Object[]> batchParams = new ArrayList<>();
+            for (Integer categoryId : preferences) {
+                batchParams.add(new Object[]{uid, categoryId});
+            }
+
+            jdbc.batchUpdate(sql, batchParams);
+        } catch (Exception e) {
+            System.err.println(e);
+            return false;
+        }
+        return true;
+    }
+
 
     // Create user's account
     @CrossOrigin(origins = "http://localhost:3000")
