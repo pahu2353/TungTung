@@ -140,7 +140,7 @@ BEGIN
   END IF;
 END$$
 
--- only assigned users can leave reviews
+-- only assigned users can be reviewed
 CREATE TRIGGER trg_enforce_assigned_reviewer
 BEFORE INSERT ON Reviews
 FOR EACH ROW
@@ -149,6 +149,23 @@ BEGIN
 
   SELECT COUNT(*) INTO is_assigned
   FROM AssignedTo
+  WHERE listid = NEW.listid AND uid = NEW.reviewee_uid;
+
+  IF is_assigned = 0 THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Only assigned users can leave reviews';
+  END IF;
+END$$
+
+-- only the poster can write reviews
+CREATE TRIGGER trg_enforce_review_writer
+BEFORE INSERT ON Reviews
+FOR EACH ROW
+BEGIN
+  DECLARE is_assigned INT;
+
+  SELECT COUNT(*) INTO is_assigned
+  FROM Posts
   WHERE listid = NEW.listid AND uid = NEW.reviewer_uid;
 
   IF is_assigned = 0 THEN
@@ -1110,32 +1127,32 @@ UPDATE Listings SET status = 'completed' WHERE listid IN (7,14,27,31,39,45,53,57
 
 -- Step 4: Insert reviews (reviewer = owner, reviewee = assigned user)
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(7, 12, 5, 4, 'Kids survived the evening without any sock casualties. Pretty sure they even liked the babysitter!', '2026-06-22 20:00:00');
+(7, 5, 12, 4, 'Kids survived the evening without any sock casualties. Pretty sure they even liked the babysitter!', '2026-06-22 20:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(14, 42, 61, 3, 'Laptop updated, but now it insists on singing whenever I open it. 3 stars for personality.', '2026-06-20 09:00:00');
+(14, 61, 42, 3, 'Laptop updated, but now it insists on singing whenever I open it. 3 stars for personality.', '2026-06-20 09:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(27, 57, 23, 5, 'Followed the grocery list exactly. Not a single cookie was sneaked. Legendary!', '2026-06-25 10:00:00');
+(27, 23, 57, 5, 'Followed the grocery list exactly. Not a single cookie was sneaked. Legendary!', '2026-06-25 10:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(31, 12, 77, 2, 'Printer works, but my computer now thinks it’s smarter than me. Send help.', '2026-06-23 15:00:00');
+(31, 77, 12, 2, 'Printer works, but my computer now thinks it’s smarter than me. Send help.', '2026-06-23 15:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(39, 5, 84, 5, 'Parcel delivered faster than my coffee cools. Couldn’t ask for better!', '2026-06-22 14:00:00');
+(39, 84, 5, 5, 'Parcel delivered faster than my coffee cools. Couldn’t ask for better!', '2026-06-22 14:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(45, 12, 35, 4, 'Dog was happy, which is the real win. Couldn’t stop stealing my socks, though.', '2026-06-25 16:00:00');
+(45, 35, 12, 4, 'Dog was happy, which is the real win. Couldn’t stop stealing my socks, though.', '2026-06-25 16:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(53, 42, 5, 3, 'Got all the fruits and veggies, but somehow ended up with a suspicious amount of bananas.', '2026-06-24 11:00:00');
+(53, 5, 42, 3, 'Got all the fruits and veggies, but somehow ended up with a suspicious amount of bananas.', '2026-06-24 11:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(57, 61, 42, 1, 'Printer is set up but WiFi now behaves like it’s the boss. One star for chaos, five for effort.', '2026-06-24 10:00:00');
+(57, 42, 61, 1, 'Printer is set up but WiFi now behaves like it’s the boss. One star for chaos, five for effort.', '2026-06-24 10:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(65, 12, 48, 4, 'Package delivered on time, though the humming was a bit much. Very enthusiastic.', '2026-06-22 12:00:00');
+(65, 48, 12, 4, 'Package delivered on time, though the humming was a bit much. Very enthusiastic.', '2026-06-22 12:00:00');
 
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
-(72, 23, 57, 2, 'Setup went okay, but now my printer seems to have a mind of its own. A bit spooky.', '2026-06-25 17:00:00');
+(72, 57, 23, 2, 'Setup went okay, but now my printer seems to have a mind of its own. A bit spooky.', '2026-06-25 17:00:00');
 
