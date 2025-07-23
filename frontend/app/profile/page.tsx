@@ -226,61 +226,68 @@ export default function ProfilePage() {
               <p className="text-gray-500 text-center py-4">No services posted yet</p>
             ) : (
               createdListings.map((listing: any) => (
-                <div key={listing.listid} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-gray-900">{listing.listing_name}</h3>
-                      <p className="text-gray-600 text-sm mt-1">{listing.description}</p>
+                <div key={listing.listid} className="space-y-3">
+                    <button
+                    className="w-full text-left p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow focus:outline-none cursor-pointer"
+                    onClick={() => {
+                        router.push(`/?search=${encodeURIComponent(listing.listing_name)}&expand=${listing.listid}`);
+                    }}
+                    >
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-900">{listing.listing_name}</h3>
+                        <p className="text-gray-600 text-sm mt-1">{listing.description}</p>
+                        </div>
+                        <Badge className={getStatusColor(listing.status)}>
+                        {listing.status.replace('_', ' ')}
+                        </Badge>
                     </div>
-                    <Badge className={getStatusColor(listing.status)}>
-                      {listing.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4 text-green-500" />
-                      <span className="font-medium">{formatCurrency(listing.price)}</span>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4 text-green-500" />
+                        <span className="font-medium">{formatCurrency(listing.price)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4 text-blue-500" />
+                        <span>{formatDuration(listing.duration)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4 text-red-500" />
+                        <span className="truncate">{listing.address}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                        <User className="w-4 h-4 text-purple-500" />
+                        <span>Capacity: {listing.capacity}</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-blue-500" />
-                      <span>{formatDuration(listing.duration)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4 text-red-500" />
-                      <span className="truncate">{listing.address}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <User className="w-4 h-4 text-purple-500" />
-                      <span>Capacity: {listing.capacity}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Mark as complete! */}
-                  {user && user.uid === profileData.uid && listing.status === 'taken' && (
+                    </button>
+                    
+                    {/* Mark as complete button - now properly outside the clickable area */}
+                    {user && user.uid === profileData.uid && listing.status === 'taken' && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
-                      <button 
+                        <button 
                         onClick={() => handleMarkComplete(listing.listid)}
-                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium flex items-center gap-2"
-                      >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className="w-4 h-4" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          strokeWidth="2" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"
+                        className="cursor-pointer px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium flex items-center gap-2"
                         >
-                          <path d="M20 6L9 17l-5-5" />
+                        <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="w-4 h-4" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <path d="M20 6L9 17l-5-5" />
                         </svg>
                         Mark as Complete
-                      </button>
+                        </button>
                     </div>
-                  )}
+                    )}
                 </div>
-              ))
+                ))
             )}
           </CardContent>
         </Card>

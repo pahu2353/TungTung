@@ -10,6 +10,7 @@ import LoadingIndicator from "@/components/loading-indicator";
 import CreateListingModal from "@/components/create-listing-modal";
 import type { Listing } from "@/components/listings-container";
 import { useUser } from "./UserContext";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
@@ -39,6 +40,23 @@ export default function Home() {
   });
 
   const [showCreateListingModal, setShowCreateListingModal] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const search = searchParams.get("search");
+    const expand = searchParams.get("expand");
+
+    if (search) {
+      setSearchQuery(search);
+      const filtered = applyFilters(listings, search, selectedCategories, statusFilter);
+      setFilteredListings(filtered);
+    }
+    if (expand) {
+      setExpandedListing(Number(expand));
+    }
+  }, [listings, searchParams]);
+
 
   // Use localStorage to check if user is logged in, update to use context setuser
   useEffect(() => {
