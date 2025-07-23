@@ -71,16 +71,62 @@ interface GraphEdge {
   color: string;
 }
 
+function AnimatedEdge({ 
+  start, 
+  end, 
+  color, 
+  opacity = 1.0, 
+  transparent = false 
+}: {
+  start: [number, number, number],
+  end: [number, number, number],
+  color: string,
+  opacity?: number,
+  transparent?: boolean
+}) {
+  const lineRef = useRef<THREE.Line>(null);
+
+  // Update line geometry when positions change
+  useFrame(() => {
+    if (lineRef.current) {
+      const positions = lineRef.current.geometry.attributes.position;
+      positions.setXYZ(0, start[0], start[1], start[2]);
+      positions.setXYZ(1, end[0], end[1], end[2]);
+      positions.needsUpdate = true;
+    }
+  });
+
+  return (
+    <line ref={lineRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          array={new Float32Array([...start, ...end])}
+          count={2}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <lineBasicMaterial 
+        color={color} 
+        opacity={opacity}
+        transparent={transparent}
+      />
+    </line>
+  );
+}
+
 function ClickableNode({ 
   node, 
   onClick, 
   isHighlighted, 
-  isFaded 
+  isFaded,
+  onPositionUpdate
 }: { 
   node: GraphNode, 
   onClick: (node: GraphNode) => void,
   isHighlighted: boolean,
-  isFaded: boolean
+  isFaded: boolean,
+  onPositionUpdate: (nodeId: string, position: [number, number, number]) => void
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
@@ -100,7 +146,7 @@ function ClickableNode({
     amplitudeZ: 0.02 + Math.random() * 0.03,
   });
 
-  // Add floating animation
+  // Add floating animation AND report position changes
   useFrame((state) => {
     if (groupRef.current) {
       const time = state.clock.getElapsedTime();
@@ -111,12 +157,18 @@ function ClickableNode({
       const floatY = Math.sin(time * offset.speedY + offset.y) * offset.amplitudeY;
       const floatZ = Math.sin(time * offset.speedZ + offset.z) * offset.amplitudeZ;
       
-      // Apply floating offset to original position
-      groupRef.current.position.set(
+      // Calculate new position
+      const newPosition: [number, number, number] = [
         originalPosition.current[0] + floatX,
         originalPosition.current[1] + floatY,
         originalPosition.current[2] + floatZ
-      );
+      ];
+      
+      // Apply floating offset to original position
+      groupRef.current.position.set(...newPosition);
+      
+      // Report position change to parent
+      onPositionUpdate(node.id, newPosition);
     }
   });
 
@@ -402,12 +454,16 @@ function NetworkGraph({
   nodes, 
   edges, 
   onNodeClick, 
-  selectedNode 
+  selectedNode,
+  nodePositions,
+  setNodePositions
 }: { 
   nodes: GraphNode[], 
   edges: GraphEdge[], 
   onNodeClick: (node: GraphNode) => void,
-  selectedNode: GraphNode | null
+  selectedNode: GraphNode | null,
+  nodePositions: Map<string, [number, number, number]>,
+  setNodePositions: React.Dispatch<React.SetStateAction<Map<string, [number, number, number]>>>
 }) {
   const controlsRef = useRef<any>(null);
 
@@ -487,43 +543,39 @@ function NetworkGraph({
             onClick={handleNodeClick}
             isHighlighted={isHighlighted}
             isFaded={isFaded}
+            onPositionUpdate={(nodeId, position) => {
+              setNodePositions(prev => new Map(prev.set(nodeId, position)));
+            }}
           />
         );
       })}
 
-      {/* Render Edges */}
+      {/* UPDATE: Render Edges with animated positions */}
       {edges.map((edge, index) => {
         const sourceNode = nodes.find(n => n.id === edge.source);
         const targetNode = nodes.find(n => n.id === edge.target);
         
         if (!sourceNode || !targetNode) return null;
         
-        const start = sourceNode.position;
-        const end = targetNode.position;
+        // Get current animated positions, fallback to original positions
+        const sourcePos = nodePositions.get(edge.source) || sourceNode.position;
+        const targetPos = nodePositions.get(edge.target) || targetNode.position;
+        
         const edgeKey = `${edge.source}-${edge.target}-${index}`;
         
         const isHighlighted = highlightedEdges.has(edgeKey);
         const isFaded = selectedNode !== null && !isHighlighted;
         const displayColor = isFaded ? '#444444' : edge.color;
         
-        const points = [new THREE.Vector3(...start), new THREE.Vector3(...end)];
-        
         return (
-          <line key={index}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                array={new Float32Array([...start, ...end])}
-                count={2}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial 
-              color={displayColor} 
-              opacity={isFaded ? 0.3 : 1.0}
-              transparent={isFaded}
-            />
-          </line>
+          <AnimatedEdge
+            key={index}
+            start={sourcePos}
+            end={targetPos}
+            color={displayColor}
+            opacity={isFaded ? 0.3 : 1.0}
+            transparent={isFaded}
+          />
         );
       })}
 
@@ -548,6 +600,7 @@ export default function GraphPage() {
   const [assignments, setAssignments] = useState<{ uid: number; listid: number }[]>([]);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [nodePositions, setNodePositions] = useState<Map<string, [number, number, number]>>(new Map());
 
   // Get user's geolocation
   useEffect(() => {
@@ -759,42 +812,61 @@ export default function GraphPage() {
       </div>
 
       {/* Selected Node Info */}
-      {selectedNode && (
-        <div className="absolute top-16 left-4 z-10 bg-black bg-opacity-75 p-4 rounded-lg text-white text-sm max-w-md">
-          <div className="flex justify-between items-start mb-2">
+        {selectedNode && (
+        <div
+            className="absolute top-16 left-4 z-10 p-4 rounded-lg text-white text-sm max-w-md"
+            style={{ backgroundColor: 'rgba(35, 35, 37, 0.52)' }} // Equivalent to bg-gray-900 with opacity
+        >
+            <div className="flex justify-between items-start mb-2">
             <h3 className="font-bold text-lg">
-              {selectedNode.type === 'user' ? 'User' : 'Listing'} Details
+                {selectedNode.type === 'user' ? 'User' : 'Listing'} Details
             </h3>
             <button 
-              onClick={() => setSelectedNode(null)}
-              className="text-gray-400 hover:text-white ml-2"
+                onClick={() => setSelectedNode(null)}
+                className="text-gray-400 hover:text-white ml-2"
             >
-              ✕
+                ✕
             </button>
-          </div>
-          
-          {selectedNode.type === 'user' ? (
-            <div className="space-y-1">
-              <div><strong>Name:</strong> {selectedNode.data.name || 'N/A'}</div>
-              <div><strong>Email:</strong> {selectedNode.data.email || 'N/A'}</div>
-              <div><strong>UID:</strong> {selectedNode.data.uid || 'N/A'}</div>
-              <div><strong>Phone:</strong> {selectedNode.data.phone || 'N/A'}</div>
-              <div><strong>Rating:</strong> {selectedNode.data.rating || 'N/A'}</div>
             </div>
-          ) : (
+            
+            {selectedNode.type === 'user' ? (
             <div className="space-y-1">
-              <div><strong>Title:</strong> {selectedNode.data.listing_name || 'N/A'}</div>
-              <div><strong>Description:</strong> {selectedNode.data.listing_description || 'N/A'}</div>
-              <div><strong>Status:</strong> <span className="capitalize">{selectedNode.data.status}</span></div>
-              <div><strong>Price:</strong> ${selectedNode.data.price || 'N/A'}</div>
-              <div><strong>Match Score:</strong> {selectedNode.data.match_score?.toFixed(2) || 'N/A'}</div>
-              <div><strong>Location:</strong> {selectedNode.data.location || 'N/A'}</div>
-              <div><strong>Category:</strong> {selectedNode.data.category || 'N/A'}</div>
-              <div><strong>Created:</strong> {selectedNode.data.date_created ? new Date(selectedNode.data.date_created).toLocaleDateString() : 'N/A'}</div>
+                <div><strong>Name:</strong> {selectedNode.data.name || 'N/A'}</div>
+                <div><strong>Email:</strong> {selectedNode.data.email || 'N/A'}</div>
+                <div><strong>UID:</strong> {selectedNode.data.uid || 'N/A'}</div>
+                <div><strong>Phone:</strong> {selectedNode.data.phone_number || 'N/A'}</div>
+                <div><strong>Rating:</strong> {selectedNode.data.overall_rating || 'N/A'}</div>
+                <Link 
+                href={`/profile?uid=${selectedNode.data.uid}`} 
+                className="inline-flex items-center justify-center mt-4 px-4 py-2 bg-white text-black font-medium rounded-md hover:bg-gray-200 transition"
+                >
+                View Profile
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    strokeWidth={2} 
+                    stroke="currentColor" 
+                    className="w-4 h-4 ml-2"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                </Link>
             </div>
-          )}
+            ) : (
+            <div className="space-y-1">
+                <div><strong>Title:</strong> {selectedNode.data.listing_name || 'N/A'}</div>
+                <div><strong>Description:</strong> {selectedNode.data.description || 'N/A'}</div>
+                <div><strong>Status:</strong> <span className="capitalize">{selectedNode.data.status}</span></div>
+                <div><strong>Price:</strong> ${selectedNode.data.price || 'N/A'}</div>
+                <div><strong>Match Score:</strong> {selectedNode.data.match_score?.toFixed(2) || 'N/A'}</div>
+                <div><strong>Location:</strong> {selectedNode.data.address || 'N/A'}</div>
+                <div><strong>Category:</strong> {selectedNode.data.category || 'N/A'}</div>
+                <div><strong>Created:</strong> {selectedNode.data.posting_time ? new Date(selectedNode.data.posting_time).toLocaleDateString() : 'N/A'}</div>
+            </div>
+            )}
         </div>
-      )}
+        )}
 
       {/* Legend */}
       <div className="absolute top-4 right-4 z-10 bg-black bg-opacity-75 p-4 rounded-lg text-white text-sm">
@@ -840,6 +912,8 @@ export default function GraphPage() {
           edges={edges} 
           onNodeClick={setSelectedNode} 
           selectedNode={selectedNode}
+          nodePositions={nodePositions}
+          setNodePositions={setNodePositions}
         />
       </Canvas>
     </div>
