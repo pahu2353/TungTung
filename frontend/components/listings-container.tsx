@@ -30,6 +30,7 @@ interface ListingsContainerProps {
   userNames: { [key: number]: string };
   onStatusFilterChange: (status: string) => void;
   onExpandListing: (listingId: number) => void;
+  user: { uid: number; name: string } | null;
 }
 
 export default function ListingsContainer({
@@ -40,6 +41,7 @@ export default function ListingsContainer({
   userNames,
   onStatusFilterChange,
   onExpandListing,
+  user,
 }: ListingsContainerProps) {
   // Filter listings based on status
   const filteredListings = listings.filter((listing) => {
@@ -88,6 +90,7 @@ export default function ListingsContainer({
             reviews={listingReviews[listing.listid] || null}
             userNames={userNames}
             onExpand={onExpandListing}
+            user={user}
           />
         ))}
       </div>
