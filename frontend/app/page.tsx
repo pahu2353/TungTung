@@ -367,6 +367,7 @@ export default function Home() {
           userNames={userNames}
           onStatusFilterChange={handleStatusFilterChange}
           onExpandListing={handleExpandListing}
+          user={user}
         />
       </main>
     </div>

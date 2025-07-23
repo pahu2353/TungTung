@@ -1,5 +1,7 @@
 "use client";
 
+import ProfileIcon from "./profile-icon";
+
 interface User {
   name: string;
   uid: number;
@@ -35,6 +37,10 @@ export default function Header({
             <span className="text-sm text-gray-600">
               Welcome, {user.name}!
             </span>
+            <ProfileIcon 
+              profilePicture={user.profile_picture || "https://placecats.com/300/300"} 
+              onLogout={onLogout} 
+            />
             {onShowCreateListing && (
               <button
                 onClick={onShowCreateListing}
@@ -43,12 +49,6 @@ export default function Header({
                 + New Listing
               </button>
             )}
-            <button
-              onClick={onLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-600 transition-colors"
-            >
-              Logout
-            </button>
           </>
         ) : (
           <button
