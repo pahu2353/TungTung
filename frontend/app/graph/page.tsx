@@ -627,14 +627,24 @@ export default function GraphPage() {
   const [nodePositions, setNodePositions] = useState<Map<string, [number, number, number]>>(new Map());
 
   // Get user's geolocation
-  useEffect(() => {
+    useEffect(() => {
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ latitude, longitude });
-      });
+        navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            setUserLocation({ latitude, longitude });
+        },
+        (error) => {
+            console.error("Geolocation error:", error);
+            // Use hardcoded backup location if geolocation fails
+            setUserLocation({ latitude: 43.4723, longitude: -80.5449 }); // Example: Waterloo, Canada
+        }
+        );
+    } else {
+        // Use hardcoded backup location if geolocation is not available
+        setUserLocation({ latitude: 43.4723, longitude: -80.5449 }); // Example: Waterloo, Canada
     }
-  }, []);
+    }, []);
 
   useEffect(() => {
     const fetchData = async () => {
