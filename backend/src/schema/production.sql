@@ -544,7 +544,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (61, 'Help Packing for Move', 'Pack fragile items carefully.', 2, 110.00, 180, '12 Elmwood Dr, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-26 15:00:00', 'cancelled');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (62, 'Deep Clean After Renovation', 'Dust and polish all rooms.', 3, 175.00, 240, '56 Green Rd, London, UK', -0.1278, 51.5074, '2026-07-01 10:00:00', 'open');
+VALUES (62, 'Light Clean After Renovation', 'Lightly dust and polish all rooms.', 3, 175.00, 240, '56 Green Rd, London, UK', -0.1278, 51.5074, '2026-07-01 10:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (63, 'Install Ceiling Fan', 'Replace old fan with new model.', 1, 95.00, 120, '90 Hill St, Melbourne, Australia', 144.9631, -37.8136, '2026-06-23 12:00:00', 'open');
