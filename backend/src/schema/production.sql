@@ -606,6 +606,7 @@ INSERT INTO BelongsTo (listid, category_id) VALUES
 -- 1-20
 (1, 1),    -- Backyard Gardening Assistance -> Gardening
 (2, 2),    -- Math Tutoring Needed -> Tutoring
+(2, 15),    -- Math Tutoring Needed -> Tutoring
 (3, 3),    -- Kitchen Sink Leak -> Plumbing
 (4, 4),    -- Piano Moving Request -> Moving
 (5, 5),    -- Home Deep Cleaning -> Cleaning
@@ -654,6 +655,7 @@ INSERT INTO BelongsTo (listid, category_id) VALUES
 (44, 13),  -- Assemble Dining Chairs -> Assembly
 (45, 14),  -- Pet Care: Dog Sitting -> Petcare
 (46, 15),  -- Tech Support -> Tech
+(46, 2),  -- Tech Support -> Tutoring
 (47, 1),   -- Lawn Mowing -> Gardening
 (48, 2),   -- Tutoring: Chemistry -> Tutoring
 (49, 3),   -- Fix Broken Door Handle -> Plumbing
@@ -682,6 +684,7 @@ INSERT INTO BelongsTo (listid, category_id) VALUES
 (70, 13),  -- Assemble Office Desk -> Assembly
 (71, 14),  -- Pet Sitting for Cat -> Petcare
 (72, 15),  -- Help with Computer Setup -> Tech
+(72, 2),  -- Help with Computer Setup -> Tutoring
 (73, 14),  -- Plant Care While Away -> Petcare
 (74, 2),   -- French Language Tutoring -> Tutoring
 (75, 3),   -- Repair Toilet Flush -> Plumbing
