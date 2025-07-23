@@ -138,12 +138,12 @@ function ClickableNode({
     x: Math.random() * Math.PI * 2,
     y: Math.random() * Math.PI * 2,
     z: Math.random() * Math.PI * 2,
-    speedX: 0.3 + Math.random() * 0.4,
-    speedY: 0.2 + Math.random() * 0.3,
-    speedZ: 0.4 + Math.random() * 0.5,
-    amplitudeX: 0.02 + Math.random() * 0.03,
-    amplitudeY: 0.015 + Math.random() * 0.025,
-    amplitudeZ: 0.02 + Math.random() * 0.03,
+    speedX: 0.6 + Math.random() * 0.6,
+    speedY: 0.5 + Math.random() * 0.5,
+    speedZ: 0.7 + Math.random() * 0.7,
+    amplitudeX: 0.06 + Math.random() * 0.05,
+    amplitudeY: 0.06 + Math.random() * 0.05,
+    amplitudeZ: 0.06 + Math.random() * 0.05,
   });
 
   // Add floating animation AND report position changes
