@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Prevent very very annoying application.properties when pulled ###
+src/main/resources/application.properties
