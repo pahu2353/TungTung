@@ -291,7 +291,15 @@ export default function ListingCard({
                   <span className="text-gray-500 text-sm">Loading...</span>
                 )}
                 <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
-                  <div className="font-medium">{poster?.name || ""}</div>
+                  {(() => {
+                    const { firstName, lastName } = splitName(poster?.name || "");
+                    return (
+                      <>
+                        <div className="font-medium">{firstName}</div>
+                        {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               {/* Assigned Users */}
