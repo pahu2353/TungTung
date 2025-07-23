@@ -6,6 +6,7 @@ import AuthModal from "@/components/auth-modal";
 import CategoryFilters from "@/components/category-filters";
 import ListingsContainer from "@/components/listings-container";
 import LoadingIndicator from "@/components/loading-indicator";
+import CreateListingModal from "@/components/create-listing-modal";
 
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
@@ -30,6 +31,8 @@ export default function Home() {
     contact: "", // Email/phone_number
     password: "",
   });
+
+  const [showCreateListingModal, setShowCreateListingModal] = useState(false);
 
   // Use localStorage to check if user is logged in
   useEffect(() => {
@@ -129,6 +132,8 @@ export default function Home() {
       if (response.ok) {
         localStorage.setItem("tungTungUser", JSON.stringify(data));
         setUser(data);
+        // log user details
+        console.log("Logged in user details:", data);
         setShowAuthModal(false);
         setAuthForm({ name: "", email: "", phone_number: "", contact: "", password: "" });
       } else {
@@ -219,12 +224,38 @@ export default function Home() {
     }
   };
 
+  const handleCreateListing = async (listingData: any) => {
+    try {
+      const response = await fetch("http://localhost:8080/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(listingData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Listing created successfully!");
+        setShowCreateListingModal(false);
+        await handleGetListings();
+      } else {
+        alert(data.error || "Failed to create listing");
+      }
+    } catch (error) {
+      console.error("Error creating listing:", error);
+      alert("Network error. Please try again.");
+    }
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <Header 
         user={user}
         onShowAuthModal={() => setShowAuthModal(true)}
         onLogout={handleLogout}
+        onShowCreateListing={user ? () => setShowCreateListingModal(true) : undefined}
       />
       
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -236,6 +267,14 @@ export default function Home() {
           onToggleMode={() => setIsSignup(!isSignup)}
           onFormChange={handleAuthFormChange}
           onSubmit={handleAuth}
+        />
+
+        <CreateListingModal
+          showModal={showCreateListingModal}
+          taskCategories={taskCategories}
+          user={user}
+          onClose={() => setShowCreateListingModal(false)}
+          onSubmit={handleCreateListing}
         />
 
         <LoadingIndicator 

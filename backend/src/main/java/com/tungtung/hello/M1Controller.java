@@ -19,12 +19,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 // Allow CORS
 @CrossOrigin(origins = "http://localhost:3000")
 public class M1Controller {
 
     private final JdbcTemplate jdbc;
+
+    private static final Logger logger = LoggerFactory.getLogger(M1Controller.class);
 
     public M1Controller(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
@@ -166,6 +171,8 @@ public class M1Controller {
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginData) {
+        logger.info("Login endpoint called with data: {}", loginData);
+        
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -173,6 +180,8 @@ public class M1Controller {
             String phoneNumber = loginData.get("phone_number");
             String password = loginData.get("password"); // WIP
 
+            logger.info("Parsed login data - Email: {}, Phone Number: {}, Password: {}", email, phoneNumber, password);
+            
             // clean values to trim whitespace
             if (email != null)
                 email = email.trim();
@@ -196,19 +205,141 @@ public class M1Controller {
 
             // Check whether user gave us an email or a phone number
             if (email != null && !email.trim().isEmpty() && isEmail(email)) {
-                sql = "SELECT uid, name, email, phone_number FROM Users WHERE email = ?";
+                sql = "SELECT uid, name, email, phone_number, profile_picture, overall_rating FROM Users WHERE email = ?";
                 parameter = email.trim();
             } else {
-                sql = "SELECT uid, name, email, phone_number FROM Users WHERE phone_number = ?";
+                sql = "SELECT uid, name, email, phone_number, profile_picture, overall_rating FROM Users WHERE phone_number = ?";
                 parameter = phoneNumber.trim();
             }
 
             Map<String, Object> user = jdbc.queryForMap(sql, parameter);
+            logger.info("Login successful for user: {}", user);
 
             return ResponseEntity.ok(user);
 
         } catch (Exception e) {
             response.put("error", "User not found");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Create new listing
+    @CrossOrigin(origins = "http://localhost:3000")
+    @PostMapping("/listings")
+    public ResponseEntity<Map<String, Object>> createListing(@RequestBody Map<String, Object> listingData) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String listingName = (String) listingData.get("listing_name");
+            String description = (String) listingData.get("description");
+            Integer capacity = (Integer) listingData.get("capacity");
+            Double price = ((Number) listingData.get("price")).doubleValue();
+            Integer duration = (Integer) listingData.get("duration");
+            String deadlineString = (String) listingData.get("deadline");
+            String address = (String) listingData.get("address");
+            Double longitude = ((Number) listingData.get("longitude")).doubleValue();
+            Double latitude = ((Number) listingData.get("latitude")).doubleValue();
+            Integer posterUid = (Integer) listingData.get("poster_uid");
+            @SuppressWarnings("unchecked")
+            List<Integer> categoryIds = (List<Integer>) listingData.get("category_ids");
+
+            if (listingName == null || listingName.trim().isEmpty()) {
+                response.put("error", "Listing name is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (price == null || price < 0) {
+                response.put("error", "Valid price is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (capacity == null || capacity <= 0) {
+                response.put("error", "Capacity must be greater than 0");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (duration == null || duration <= 0) {
+                response.put("error", "Duration must be greater than 0");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (deadlineString == null || deadlineString.trim().isEmpty()) {
+                response.put("error", "Deadline is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (address == null || address.trim().isEmpty()) {
+                response.put("error", "Address is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (posterUid == null) {
+                response.put("error", "User must be logged in to create listing");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (categoryIds == null || categoryIds.isEmpty()) {
+                response.put("error", "At least one category must be selected");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            java.sql.Timestamp deadline;
+            try {
+                java.time.Instant instant = java.time.Instant.parse(deadlineString);
+                deadline = java.sql.Timestamp.from(instant);
+            } catch (Exception e) {
+                response.put("error", "Invalid deadline format");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+            java.sql.Timestamp minDeadline = new java.sql.Timestamp(now.getTime() + (duration * 60 * 1000L));
+            
+            if (deadline.before(minDeadline)) {
+                response.put("error", "Deadline must be at least " + duration + " minutes from now");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Current timestamp is posting time
+            String listingSql = "INSERT INTO Listings (listing_name, description, capacity, price, duration, address, longitude, latitude, posting_time, deadline, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open')";
+
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            
+            jdbc.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(listingSql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, listingName.trim());
+                ps.setString(2, description != null ? description.trim() : null);
+                ps.setInt(3, capacity);
+                ps.setDouble(4, price);
+                ps.setInt(5, duration);
+                ps.setString(6, address.trim());
+                ps.setDouble(7, longitude);
+                ps.setDouble(8, latitude);
+                ps.setTimestamp(9, now); // posting_time
+                ps.setTimestamp(10, deadline);
+                return ps;
+            }, keyHolder);
+
+            int newListingId = keyHolder.getKey().intValue();
+
+            // Insert into Posts and BelongsTo table
+            String postsSql = "INSERT INTO Posts (listid, uid) VALUES (?, ?)";
+            jdbc.update(postsSql, newListingId, posterUid);
+
+            String belongsToSql = "INSERT INTO BelongsTo (listid, category_id) VALUES (?, ?)";
+            for (Integer categoryId : categoryIds) {
+                jdbc.update(belongsToSql, newListingId, categoryId);
+            }
+
+            response.put("listid", newListingId);
+            response.put("message", "Listing created successfully");
+            response.put("deadline", deadline.toString());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Error creating listing: " + e.getMessage());
+            e.printStackTrace();
+            response.put("error", "Failed to create listing. Please try again.");
             return ResponseEntity.badRequest().body(response);
         }
     }
