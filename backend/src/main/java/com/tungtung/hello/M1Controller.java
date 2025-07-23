@@ -805,8 +805,7 @@ public class M1Controller {
                 
                 response.put("message", "Review updated successfully");
             } else {
-                // Insert new review
-                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment) VALUES (?, ?, ?, ?, ?)";
+                String insertSql = "INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
                 jdbc.update(insertSql, listid, reviewerUid, revieweeUid, rating, comment);
                 
                 response.put("message", "Review submitted successfully");
