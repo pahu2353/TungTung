@@ -635,7 +635,7 @@ export default function GraphPage() {
             setUserLocation({ latitude, longitude });
         },
         (error) => {
-            console.error("Geolocation error: please enable location service permissions", error);
+            console.log("Please enable location service permissions: ", error);
             // Use hardcoded backup location if geolocation fails
             setUserLocation({ latitude: 43.4723, longitude: -80.5449 }); // Example: Waterloo, Canada
         }
