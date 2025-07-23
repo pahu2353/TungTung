@@ -742,7 +742,7 @@ export default function GraphPage() {
         data: listing,
         position: [
           Math.cos(angle) * radius,
-          (Math.random() - 0.5) * 4,
+          (Math.random() - 0.5) * 6.5,
           Math.sin(angle) * radius
         ],
         color,
@@ -762,7 +762,7 @@ export default function GraphPage() {
         data: userData,
         position: [
           Math.cos(angle) * radius,
-          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 5,
           Math.sin(angle) * radius
         ],
         color: userData.uid === user?.uid ? '#c084fc' : '#ffffff', // lilac for current user
@@ -782,7 +782,7 @@ export default function GraphPage() {
           source: `user_${posting.uid}`,
           target: `listing_${posting.listid}`,
           type: 'posting',
-          color: '#4fd1c7' // Bright pastel teal
+          color: 'rgba(48, 153, 182, 1)' // Bright pastel teal
         });
       }
     });
@@ -829,16 +829,31 @@ export default function GraphPage() {
   return (
     <div className="h-screen w-screen bg-black relative">
       {/* Header */}
-      <div className="absolute top-4 left-4 z-10">
-        <Link href="/" className="inline-flex items-center text-white hover:text-gray-300 transition-colors">
-          <House className="w-6 h-6" />
+        <div className="absolute top-8 left-8 z-50"> {/* Increased z-index from z-10 to z-50 */}
+        <Link 
+            href="/" 
+            className="inline-flex items-center text-white hover:text-gray-300 transition-colors p-2 rounded-md bg-black bg-opacity-50"
+            onClick={(e) => {
+            // Prevent any event bubbling to the canvas
+            e.stopPropagation();
+            e.preventDefault();
+            // Force navigation
+            window.location.href = '/';
+            }}
+            style={{ 
+            position: 'relative',
+            zIndex: 9999,
+            pointerEvents: 'auto' // Ensure this element can receive pointer events
+            }}
+        >
+            <House className="w-6 h-6" />
         </Link>
-      </div>
+        </div>
 
       {/* Selected Node Info */}
         {selectedNode && (
         <div
-            className="absolute top-16 left-4 z-10 p-4 rounded-lg text-white text-sm max-w-md"
+            className="absolute top-24 left-8 z-10 p-4 rounded-lg text-white text-sm max-w-md"
             style={{ backgroundColor: 'rgba(35, 35, 37, 0.52)' }} // Equivalent to bg-gray-900 with opacity
         >
             <div className="flex justify-between items-start mb-2">
@@ -896,7 +911,7 @@ export default function GraphPage() {
 
       {/* Legend */}
         <div
-        className="absolute top-4 right-4 z-10 p-4 rounded-lg text-white text-sm"
+        className="absolute top-8 right-8 z-10 p-4 rounded-lg text-white text-sm"
         style={{ backgroundColor: 'rgba(35, 35, 37, 0.52)' }} // Match the listing details background
         >
         <h3 className="font-bold mb-2">Legend</h3>
@@ -922,7 +937,10 @@ export default function GraphPage() {
             <span>Current User</span>
             </div>
             <div className="flex items-center gap-2">
-            <div className="w-8 h-0.5 bg-teal-400"></div>
+            <div
+              className="w-8 h-0.5"
+              style={{ backgroundColor: 'rgba(48, 153, 182, 1)' }}
+            ></div>
             <span>Posted By</span>
             </div>
             <div className="flex items-center gap-2">
@@ -934,7 +952,7 @@ export default function GraphPage() {
 
       {/* 3D Canvas - Full Screen */}
       <Canvas 
-        camera={{ position: [15, 10, 15], fov: 60 }}
+        camera={{ position: [15, 5, 15], fov: 60 }}
         style={{ width: '100vw', height: '100vh' }}
       >
         <color attach="background" args={['#000000']} />
