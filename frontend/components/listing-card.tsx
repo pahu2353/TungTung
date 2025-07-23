@@ -1,11 +1,11 @@
 "use client";
 
 import ReviewsList from "./reviews-list";
-import { AssignedList } from "./assigned-list";
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
 
 interface Listing {
   listid: number;
@@ -268,14 +268,16 @@ export default function ListingCard({
                       const { firstName, lastName } = splitName(assigned.name || '');
                       return (
                         <div key={assigned.uid} className="flex flex-col items-center min-w-[80px]">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
-                            <AvatarFallback>
-                              {assigned.name
-                                ? assigned.name.split(" ").map((n) => n[0]).join("")
-                                : "?"}
-                            </AvatarFallback>
-                          </Avatar>
+                          <Link href={`/profile?uid=${assigned.uid}`}>
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={assigned.profile_picture || "https://placecats.com/300/300"} />
+                              <AvatarFallback>
+                                {assigned.name
+                                  ? assigned.name.split(" ").map((n) => n[0]).join("")
+                                  : "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Link>  
                           <div className="text-xs mt-1 text-center leading-tight min-h-[24px] flex flex-col justify-center">
                             <div className="font-medium">{firstName}</div>
                             {lastName && <div className="text-gray-600 dark:text-gray-400">{lastName}</div>}
