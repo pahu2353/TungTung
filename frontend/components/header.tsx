@@ -54,9 +54,9 @@ export default function Header({
             {onShowCreateListing && (
               <button
                 onClick={onShowCreateListing}
-                className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600 transition-colors"
+                className="cursor-pointer bg-green-500 text-white px-4 py-2 rounded-md  font-medium hover:bg-green-600 transition-colors"
               >
-                + New Listing
+                Create Listing
               </button>
             )}
           </>
