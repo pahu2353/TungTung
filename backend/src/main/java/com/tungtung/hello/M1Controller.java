@@ -78,9 +78,8 @@ public class M1Controller {
                 (
                     COUNT(DISTINCT II.category_id) * 75
                     + (L.price/L.duration) * 10
-                    -- - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 600000
-                    - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 1
-                    + 255
+                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 6000000 + 20
+                    - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 1 + 255
                 ) AS match_score,
                 CASE L.status 
                     WHEN 'open' THEN 1 
