@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/header";
 import AuthModal from "@/components/auth-modal";
 import CategoryFilters from "@/components/category-filters";
+import SearchBar from "@/components/search-bar";
 import ListingsContainer from "@/components/listings-container";
 import LoadingIndicator from "@/components/loading-indicator";
 import CreateListingModal from "@/components/create-listing-modal";
@@ -11,16 +12,17 @@ import CreateListingModal from "@/components/create-listing-modal";
 export default function Home() {
   const [taskCategories, setTaskCategories] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
+  const [filteredListings, setFilteredListings] = useState<any[]>([]);
   const [expandedListing, setExpandedListing] = useState<number | null>(null);
   const [listingReviews, setListingReviews] = useState<{
     [key: number]: any[];
   }>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
-  // Auth state
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -57,6 +59,7 @@ export default function Home() {
       const response = await fetch("http://localhost:8080/listings");
       const data = await response.json();
       setListings(data);
+      setFilteredListings(data);
     } catch (error) {
       console.error("Error fetching listings:", error);
     }
@@ -72,15 +75,62 @@ export default function Home() {
     loadData();
   }, []);
 
-  const toggleCategory = async (categoryName: string) => {
+
+  const applyFilters = (
+    allListings: any[],
+    search: string,
+    categories: string[],
+    status: string
+  ) => {
+    let filtered = [...allListings];
+
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (listing) =>
+          listing.listing_name?.toLowerCase().includes(searchLower) ||
+          listing.description?.toLowerCase().includes(searchLower) ||
+          listing.address?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (status !== "all") {
+      filtered = filtered.filter((listing) => listing.status === status);
+    }
+
+    return filtered;
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+
+    if (!query.trim()) {
+      if (selectedCategories.length > 0) {
+        toggleCategory(selectedCategories[0], true); 
+      } else {
+        setFilteredListings(listings);
+      }
+    } else {
+      const filtered = applyFilters(listings, query, selectedCategories, statusFilter);
+      setFilteredListings(filtered);
+    }
+  };
+
+  const toggleCategory = async (categoryName: string, skipAPICall = false) => {
     const updated = selectedCategories.includes(categoryName)
       ? selectedCategories.filter((c) => c !== categoryName)
       : [...selectedCategories, categoryName];
 
     setSelectedCategories(updated);
 
+    if (skipAPICall) return;
+
     if (updated.length === 0) {
-      await handleGetListings(); // Reset to all listings
+      await handleGetListings(); 
+      if (searchQuery.trim()) {
+        const filtered = applyFilters(listings, searchQuery, [], statusFilter);
+        setFilteredListings(filtered);
+      }
     } else {
       // Manually fetch filtered listings
       const params = new URLSearchParams();
@@ -91,6 +141,9 @@ export default function Home() {
         const response = await fetch(`http://localhost:8080/listings/filter?${params.toString()}`);
         const data = await response.json();
         setListings(data);
+
+        const filtered = applyFilters(data, searchQuery, updated, statusFilter);
+        setFilteredListings(filtered);
       } catch (error) {
         console.error("Error fetching filtered listings:", error);
       } finally {
@@ -156,6 +209,11 @@ export default function Home() {
   const handleClearCategoryFilters = async () => {
     setSelectedCategories([]);
     await handleGetListings();
+    // Reapply search if there's a query
+    if (searchQuery.trim()) {
+      const filtered = applyFilters(listings, searchQuery, [], statusFilter);
+      setFilteredListings(filtered);
+    }
   };
 
   // Fetch user name by UID
@@ -249,6 +307,12 @@ export default function Home() {
     }
   };
 
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    const filtered = applyFilters(listings, searchQuery, selectedCategories, status);
+    setFilteredListings(filtered);
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <Header 
@@ -258,7 +322,7 @@ export default function Home() {
         onShowCreateListing={user ? () => setShowCreateListingModal(true) : undefined}
       />
       
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center w-full max-w-6xl">
         <AuthModal
           showAuthModal={showAuthModal}
           isSignup={isSignup}
@@ -289,13 +353,19 @@ export default function Home() {
           onClearFilters={handleClearCategoryFilters}
         />
 
-        <ListingsContainer
+        <SearchBar
+          onSearch={handleSearch}
           listings={listings}
+          loading={loading}
+        />
+
+        <ListingsContainer
+          listings={filteredListings}
           statusFilter={statusFilter}
           expandedListing={expandedListing}
           listingReviews={listingReviews}
           userNames={userNames}
-          onStatusFilterChange={setStatusFilter}
+          onStatusFilterChange={handleStatusFilterChange}
           onExpandListing={handleExpandListing}
         />
       </main>
