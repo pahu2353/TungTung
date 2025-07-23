@@ -745,6 +745,38 @@ public class M1Controller {
         return jdbc.queryForList(sql, String.class, listid);
     }
 
+    // Get all posting edges (just uid and listid)
+    @GetMapping("/postings")
+    public List<Map<String, Object>> getAllPostings() {
+        String sql = "SELECT uid, listid FROM Posts";
+        return jdbc.queryForList(sql);
+    }
+
+    // Get all assignment edges (just uid and listid)
+    @GetMapping("/assignments")
+    public List<Map<String, Object>> getAllAssignments() {
+        String sql = "SELECT uid, listid FROM AssignedTo";
+        return jdbc.queryForList(sql);
+    }
+
+    @GetMapping("/info/listings")
+    public List<Map<String, Object>> getAllListings() {
+        String sql = """
+            SELECT listid, listing_name, status, price, address
+            FROM Listings
+        """;
+        return jdbc.queryForList(sql);
+    }
+
+    @GetMapping("/info/users")
+    public List<Map<String, Object>> getAllUsers() {
+        String sql = """
+            SELECT uid, name, profile_picture, email, phone_number, overall_rating
+            FROM Users
+        """;
+        return jdbc.queryForList(sql);
+    }
+
     // Create a review (after a posting is completed)
     // Triggers ensure that reviewer is the person who posted
     @PostMapping("/reviews")

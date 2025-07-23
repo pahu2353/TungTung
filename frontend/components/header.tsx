@@ -3,6 +3,7 @@
 import ProfileIcon from "./profile-icon";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { BarChart3 } from "lucide-react";
 
 interface User {
   name: string;
@@ -33,6 +34,7 @@ export default function Header({
   };
 
   return (
+    <>
     <header className="row-start-1 flex gap-6 flex-wrap items-center justify-between w-full">
       <div onClick={handleLogoClick} className="flex items-center gap-2 cursor-pointer">
         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -70,5 +72,19 @@ export default function Header({
         )}
       </div>
     </header>
+
+      {/* Bottom right graph icon button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Link href="/graph">
+          <button
+            className="flex items-center justify-center w-14 h-14 rounded-full border border-blue-300 bg-blue-400/80 backdrop-blur-md shadow-lg transition hover:bg-blue-500/90"
+            title="View Network Graph"
+            aria-label="View Network Graph"
+          >
+            <BarChart3 className="w-7 h-7 text-white" />
+          </button>
+        </Link>
+      </div>
+    </>
   );
 }
