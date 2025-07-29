@@ -598,7 +598,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (79, 'Babysitting Weekend', 'Care for 2 children, ages 5 and 7.', 1, 60.00, 480, '34 Sunset Blvd, Los Angeles, CA, USA', -118.2437, 34.0522, '2026-06-20 16:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (80, 'Deliver Documents', 'Urgent delivery downtown.', 1, 20.00, 30, '45 Queen St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 10:00:00', 'open');
+VALUES (80, 'Deliver Documents', 'Urgent delivery downtown.', 3, 20.00, 30, '45 Queen St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 10:00:00', 'open');
 
 
 
