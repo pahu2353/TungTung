@@ -358,7 +358,7 @@ INSERT INTO TaskCategories (category_name) VALUES
 
 -- Listings 1–20
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (1, 'Backyard Gardening Assistance', 'I need help trimming hedges and de-weeding.', 1, 25.00, 120, '123 Maple St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-18 08:00:00', 'taken');
+VALUES (1, 'Backyard Gardening Assistance', 'I need help trimming hedges and de-weeding.', 1, 25.00, 120, '123 Maple St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-18 08:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (2, 'Math Tutoring Needed', 'Grade 10 student struggles with algebra.', 1, 35.00, 90, '456 Elm Rd, London, UK', -0.1278, 51.5074, '2026-06-20 17:00:00', 'open');
@@ -370,7 +370,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (4, 'Piano Moving Request', 'Need help moving upright piano.', 4, 150.00, 180, '12 Beethoven Ave, Vienna, Austria', 16.3738, 48.2082, '2026-07-01 10:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (5, 'Home Deep Cleaning', 'Bathrooms and kitchen need attention.', 2, 120.00, 180, '34 Rue de la Paix, Paris, France', 2.3522, 48.8566, '2026-06-20 09:30:00', 'taken');
+VALUES (5, 'Home Deep Cleaning', 'Bathrooms and kitchen need attention.', 2, 120.00, 180, '34 Rue de la Paix, Paris, France', 2.3522, 48.8566, '2026-06-20 09:30:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (6, 'Electrical Outlet Install', 'Need extra plug in living room.', 1, 60.00, 90, '56 Green St, Auckland, NZ', 174.7633, -36.8485, '2026-06-25 14:00:00', 'open');
@@ -379,7 +379,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (7, 'Evening Babysitting', 'Looking after 2 kids for 4 hours.', 2, 50.00, 240, '78 Sunset Blvd, Los Angeles, CA, USA', -118.2437, 34.0522, '2026-06-21 20:00:00', 'completed');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (8, 'Grocery Delivery', 'Pick up and deliver my weekly shopping.', 1, 30.00, 60, '90 Queen St, Auckland, NZ', 174.7633, -36.8485, '2026-06-22 18:00:00', 'taken');
+VALUES (8, 'Grocery Delivery', 'Pick up and deliver my weekly shopping.', 1, 30.00, 60, '90 Queen St, Auckland, NZ', 174.7633, -36.8485, '2026-06-22 18:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (9, 'Living Room Painting', 'Primer and one top coat.', 2, 200.00, 300, '123 King St, Sydney, Australia', 151.2093, -33.8688, '2026-06-30 09:00:00', 'open');
@@ -388,7 +388,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (10, 'Home Chef Needed', 'Prepare dinner for family of 5.', 1, 100.00, 180, '456 Ranch Rd, Austin, TX, USA', -97.7431, 30.2672, '2026-06-21 17:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (11, 'Weekly Laundry Service', 'Wash and fold clothes.', 1, 40.00, 120, '12 Elm St, Dublin, Ireland', -6.2603, 53.3498, '2026-06-28 11:00:00', 'taken');
+VALUES (11, 'Weekly Laundry Service', 'Wash and fold clothes.', 1, 40.00, 120, '12 Elm St, Dublin, Ireland', -6.2603, 53.3498, '2026-06-28 11:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (12, 'Ikea Furniture Assembly', 'Assemble bookcase and table.', 1, 70.00, 180, '78 Avenida Paulista, São Paulo, Brazil', -46.6333, -23.5505, '2026-06-23 13:00:00', 'open');
@@ -406,7 +406,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (16, 'Spanish Tutoring', 'Intermediate level conversation practice.', 1, 40.00, 60, 'City Center, Madrid, Spain', -3.7038, 40.4168, '2026-06-23 15:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (17, 'Bathroom Plumbing Repair', 'Clogged drain needs fixing.', 1, 90.00, 90, '22 Queen St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-23 14:00:00', 'taken');
+VALUES (17, 'Bathroom Plumbing Repair', 'Clogged drain needs fixing.', 1, 90.00, 90, '22 Queen St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-23 14:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (18, 'Assist with House Move', '2-bedroom apartment move.', 3, 200.00, 240, '8 Avenida da Liberdade, Lisbon, Portugal', -9.1393, 38.7223, '2026-06-26 12:00:00', 'cancelled');
@@ -422,7 +422,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (21, 'Dog Walking Needed', 'Walk my energetic golden retriever daily.', 1, 25.00, 30, '234 Main St, Seattle, WA, USA', -122.3321, 47.6062, '2026-06-20 07:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (22, 'Tutoring: High School Physics', 'Help understanding kinematics and forces.', 1, 40.00, 90, '567 Oak Lane, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-27 15:00:00', 'taken');
+VALUES (22, 'Tutoring: High School Physics', 'Help understanding kinematics and forces.', 1, 40.00, 90, '567 Oak Lane, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-27 15:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (23, 'Fix Leaky Faucet', 'Kitchen faucet dripping constantly.', 1, 70.00, 60, '890 Pine Rd, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-23 11:00:00', 'open');
@@ -431,7 +431,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (24, 'Help Moving Boxes', 'Assist with packing and moving boxes.', 3, 120.00, 180, '12 Cherry St, Dublin, Ireland', -6.2603, 53.3498, '2026-07-05 10:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (25, 'Interior Wall Painting', 'Paint two bedrooms.', 2, 180.00, 240, '45 Park Ave, New York, NY, USA', -74.0060, 40.7128, '2026-06-27 13:00:00', 'taken');
+VALUES (25, 'Interior Wall Painting', 'Paint two bedrooms.', 2, 180.00, 240, '45 Park Ave, New York, NY, USA', -74.0060, 40.7128, '2026-06-27 13:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (26, 'Cooking Help: Birthday Party', 'Prepare finger foods for 20 guests.', 1, 120.00, 240, '789 Maple Dr, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-21 18:00:00', 'open');
@@ -446,7 +446,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (29, 'Assemble Office Desk', 'Assemble IKEA desk.', 1, 80.00, 150, '123 Market St, San Francisco, CA, USA', -122.4194, 37.7749, '2026-06-28 11:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (30, 'Pet Sitting for Cat', 'Feed and clean litter box.', 1, 40.00, 180, '321 Elm St, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-30 20:00:00', 'taken');
+VALUES (30, 'Pet Sitting for Cat', 'Feed and clean litter box.', 1, 40.00, 180, '321 Elm St, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-30 20:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (31, 'Help with Computer Setup', 'Install software and printers.', 1, 55.00, 120, '456 Tech Rd, Berlin, Germany', 13.4050, 52.5200, '2026-06-22 14:00:00', 'completed');
@@ -458,7 +458,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (33, 'French Language Tutoring', 'Conversational French help.', 1, 45.00, 90, '23 Rue Lafayette, Paris, France', 2.3522, 48.8566, '2026-06-23 11:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (34, 'Repair Toilet Flush', 'Handle broken flush mechanism.', 1, 85.00, 60, '78 Pine St, Auckland, NZ', 174.7633, -36.8485, '2026-06-22 13:00:00', 'taken');
+VALUES (34, 'Repair Toilet Flush', 'Handle broken flush mechanism.', 1, 85.00, 60, '78 Pine St, Auckland, NZ', 174.7633, -36.8485, '2026-06-22 13:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (35, 'Help Packing for Move', 'Pack fragile items carefully.', 2, 110.00, 180, '12 Elmwood Dr, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-27 12:00:00', 'cancelled');
@@ -470,7 +470,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (37, 'Install Ceiling Fan', 'Replace old fan with new model.', 1, 95.00, 120, '90 Hill St, Melbourne, Australia', 144.9631, -37.8136, '2026-06-25 14:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (38, 'Babysitting for Evening', 'Care for 3-year-old for 5 hours.', 1, 55.00, 300, '67 Broadway, New York, NY, USA', -74.0060, 40.7128, '2026-06-20 17:00:00', 'taken');
+VALUES (38, 'Babysitting for Evening', 'Care for 3-year-old for 5 hours.', 1, 55.00, 300, '67 Broadway, New York, NY, USA', -74.0060, 40.7128, '2026-06-20 17:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (39, 'Deliver Package', 'Pick up and deliver a small parcel.', 1, 25.00, 60, '45 Main St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 13:00:00', 'completed');
@@ -483,7 +483,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (41, 'Prepare Weekly Meals', 'Cook and package meals for family of 4.', 1, 130.00, 240, '123 West St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-26 14:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (42, 'Grocery Shopping Help', 'Shop with list, focus on organic products.', 1, 40.00, 90, '456 King St, Sydney, Australia', 151.2093, -33.8688, '2026-06-23 18:00:00', 'taken');
+VALUES (42, 'Grocery Shopping Help', 'Shop with list, focus on organic products.', 1, 40.00, 90, '456 King St, Sydney, Australia', 151.2093, -33.8688, '2026-06-23 18:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (43, 'Clothes Laundry Service', 'Wash, dry, and fold.', 1, 45.00, 120, '67 Queen St, Auckland, NZ', 174.7633, -36.8485, '2026-06-26 11:00:00', 'open');
@@ -501,7 +501,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (47, 'Lawn Mowing', 'Mow front and backyard.', 1, 35.00, 60, '56 Maple St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-22 11:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (48, 'Tutoring: Chemistry', 'Help with high school chemistry homework.', 1, 40.00, 90, '123 College Rd, Dublin, Ireland', -6.2603, 53.3498, '2026-06-30 16:00:00', 'taken');
+VALUES (48, 'Tutoring: Chemistry', 'Help with high school chemistry homework.', 1, 40.00, 90, '123 College Rd, Dublin, Ireland', -6.2603, 53.3498, '2026-06-30 16:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (49, 'Fix Broken Door Handle', 'Replace or repair door handle.', 1, 60.00, 60, '78 Pine St, Melbourne, Australia', 144.9631, -37.8136, '2026-06-22 12:00:00', 'open');
@@ -510,7 +510,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (50, 'Help Moving Furniture', 'Assist moving sofa and bed.', 3, 140.00, 180, '45 Elm St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-07-03 10:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (51, 'Painting Fences', 'Paint wooden fence white.', 2, 120.00, 240, '90 Queen St, Auckland, NZ', 174.7633, -36.8485, '2026-06-26 13:00:00', 'taken');
+VALUES (51, 'Painting Fences', 'Paint wooden fence white.', 2, 120.00, 240, '90 Queen St, Auckland, NZ', 174.7633, -36.8485, '2026-06-26 13:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (52, 'Cook Dinner for Event', 'Prepare meal for 10 people.', 1, 110.00, 180, '12 Oak Rd, London, UK', -0.1278, 51.5074, '2026-06-22 19:00:00', 'open');
@@ -525,7 +525,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (55, 'Assemble Bookshelf', 'Assemble large wooden bookshelf.', 1, 90.00, 150, '123 Elm Rd, New York, NY, USA', -74.0060, 40.7128, '2026-06-27 14:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (56, 'Pet Sitting for Rabbits', 'Feed and clean cages.', 1, 40.00, 180, '89 Main St, Berlin, Germany', 13.4050, 52.5200, '2026-06-30 18:00:00', 'taken');
+VALUES (56, 'Pet Sitting for Rabbits', 'Feed and clean cages.', 1, 40.00, 180, '89 Main St, Berlin, Germany', 13.4050, 52.5200, '2026-06-30 18:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (57, 'Help Setting up Printer', 'Connect and configure printer.', 1, 60.00, 90, '45 Tech Blvd, San Francisco, CA, USA', -122.4194, 37.7749, '2026-06-23 09:00:00', 'completed');
@@ -537,7 +537,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (59, 'Italian Language Tutoring', 'Beginner Italian lessons.', 1, 45.00, 90, '23 Via Roma, Rome, Italy', 12.4964, 41.9028, '2026-06-26 10:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (60, 'Fix Clogged Shower Drain', 'Slow draining shower.', 1, 80.00, 60, '12 Pine St, Melbourne, Australia', 144.9631, -37.8136, '2026-06-22 13:00:00', 'taken');
+VALUES (60, 'Fix Clogged Shower Drain', 'Slow draining shower.', 1, 80.00, 60, '12 Pine St, Melbourne, Australia', 144.9631, -37.8136, '2026-06-22 13:00:00', 'open');
 
 -- Listings 61–80
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
@@ -550,7 +550,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (63, 'Install Ceiling Fan', 'Replace old fan with new model.', 1, 95.00, 120, '90 Hill St, Melbourne, Australia', 144.9631, -37.8136, '2026-06-23 12:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (64, 'Babysitting for Evening', 'Care for 3-year-old for 5 hours.', 1, 55.00, 300, '67 Broadway, New York, NY, USA', -74.0060, 40.7128, '2026-06-20 17:00:00', 'taken');
+VALUES (64, 'Extra Babysitting for Evening', 'Care for 2 4-year-olds for 6 hours.', 2, 55.00, 300, '68 Broadway, New York, NY, USA', -74.0060, 40.7128, '2026-06-20 17:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (65, 'Deliver Package', 'Pick up and deliver a small parcel.', 1, 25.00, 60, '45 Main St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 11:00:00', 'completed');
@@ -571,7 +571,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (70, 'Assemble Office Desk', 'Assemble IKEA desk.', 1, 80.00, 150, '123 Market St, San Francisco, CA, USA', -122.4194, 37.7749, '2026-06-27 13:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (71, 'Pet Sitting for Cat', 'Feed and clean litter box.', 1, 40.00, 180, '321 Elm St, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-30 20:00:00', 'taken');
+VALUES (71, 'Pet Sitting for Cat', 'Feed and clean litter box.', 1, 40.00, 180, '321 Elm St, Chicago, IL, USA', -87.6298, 41.8781, '2026-06-30 20:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (72, 'Help with Computer Setup', 'Install software and printers.', 1, 55.00, 120, '456 Tech Rd, Berlin, Germany', 13.4050, 52.5200, '2026-06-24 15:00:00', 'completed');
@@ -583,7 +583,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (74, 'French Language Tutoring', 'Conversational French help.', 1, 45.00, 90, '23 Rue Lafayette, Paris, France', 2.3522, 48.8566, '2026-06-27 14:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (75, 'Repair Toilet Flush', 'Handle broken flush mechanism.', 1, 85.00, 60, '78 Pine St, Auckland, NZ', 174.7633, -36.8485, '2026-06-22 13:00:00', 'taken');
+VALUES (75, 'Urgent Repair for Toilet Flush', 'Handle super broken flush mechanism.', 2, 85.00, 60, '78 Pine St, Auckland, NZ', 174.7633, -36.8485, '2026-06-22 13:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (76, 'Help Packing Boxes', 'Pack fragile kitchenware.', 2, 100.00, 180, '56 Elm St, Toronto, ON, Canada', -79.3832, 43.6532, '2026-06-26 17:00:00', 'cancelled');
@@ -595,7 +595,7 @@ INSERT INTO Listings (listid, listing_name, description, capacity, price, durati
 VALUES (78, 'Install Wall Mounted TV', 'Mount and connect TV.', 1, 95.00, 120, '67 Broadway, New York, NY, USA', -74.0060, 40.7128, '2026-06-23 16:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
-VALUES (79, 'Babysitting Weekend', 'Care for 2 children, ages 5 and 7.', 1, 60.00, 480, '34 Sunset Blvd, Los Angeles, CA, USA', -118.2437, 34.0522, '2026-06-20 16:00:00', 'taken');
+VALUES (79, 'Babysitting Weekend', 'Care for 2 children, ages 5 and 7.', 1, 60.00, 480, '34 Sunset Blvd, Los Angeles, CA, USA', -118.2437, 34.0522, '2026-06-20 16:00:00', 'open');
 
 INSERT INTO Listings (listid, listing_name, description, capacity, price, duration, address, longitude, latitude, deadline, status)
 VALUES (80, 'Deliver Documents', 'Urgent delivery downtown.', 1, 20.00, 30, '45 Queen St, Vancouver, BC, Canada', -123.1207, 49.2827, '2026-06-21 10:00:00', 'open');
@@ -606,6 +606,7 @@ INSERT INTO BelongsTo (listid, category_id) VALUES
 -- 1-20
 (1, 1),    -- Backyard Gardening Assistance -> Gardening
 (2, 2),    -- Math Tutoring Needed -> Tutoring
+(2, 15),    -- Math Tutoring Needed -> Tutoring
 (3, 3),    -- Kitchen Sink Leak -> Plumbing
 (4, 4),    -- Piano Moving Request -> Moving
 (5, 5),    -- Home Deep Cleaning -> Cleaning
@@ -654,6 +655,7 @@ INSERT INTO BelongsTo (listid, category_id) VALUES
 (44, 13),  -- Assemble Dining Chairs -> Assembly
 (45, 14),  -- Pet Care: Dog Sitting -> Petcare
 (46, 15),  -- Tech Support -> Tech
+(46, 2),  -- Tech Support -> Tutoring
 (47, 1),   -- Lawn Mowing -> Gardening
 (48, 2),   -- Tutoring: Chemistry -> Tutoring
 (49, 3),   -- Fix Broken Door Handle -> Plumbing
@@ -682,6 +684,7 @@ INSERT INTO BelongsTo (listid, category_id) VALUES
 (70, 13),  -- Assemble Office Desk -> Assembly
 (71, 14),  -- Pet Sitting for Cat -> Petcare
 (72, 15),  -- Help with Computer Setup -> Tech
+(72, 2),  -- Help with Computer Setup -> Tutoring
 (73, 14),  -- Plant Care While Away -> Petcare
 (74, 2),   -- French Language Tutoring -> Tutoring
 (75, 3),   -- Repair Toilet Flush -> Plumbing
@@ -969,6 +972,26 @@ INSERT INTO InterestedIn (uid, category_id) VALUES
 (99, 7),
 (100, 2),
 (100, 14);
+
+
+-- fix taken labels with no assignments:
+INSERT INTO AssignedTo (listid, uid) VALUES
+(42, 80),
+(34, 69),
+(64, 13),
+(64, 31),
+(79, 44),
+(8, 21),
+(25, 2),
+(51, 4),
+(30, 44),
+(56, 97),
+(17, 63),
+(60, 63),
+(22, 71),
+(1, 1);
+
+
 
 
 -- Listing 2 (open, capacity=1, owner=57)

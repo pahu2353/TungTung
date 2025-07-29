@@ -256,21 +256,21 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-                {user.preferences && user.preferences.map((category: string, index: number) => {
-                  return (
+                {user?.preferences && user.preferences.map((category: string, index: number) => {
+                    return (
                     <div
-                      key={index}
-                      className={`flex-shrink-0 h-10 px-4 flex items-center rounded-full border transition-colors ${
+                        key={index}
+                        className={`flex-shrink-0 h-10 px-4 flex items-center rounded-full border transition-colors ${
                         'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
-                      }`}
+                        }`}
                     >
-                      <span className="text-sm font-medium whitespace-nowrap">
+                        <span className="text-sm font-medium whitespace-nowrap">
                         {category}
-                      </span>
+                        </span>
                     </div>
-                  );
+                    );
                 })}
-              </div>
+                </div>
             </div>
           </CardContent>
         </Card>

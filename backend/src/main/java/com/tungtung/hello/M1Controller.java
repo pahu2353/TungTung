@@ -78,8 +78,8 @@ public class M1Controller {
                 (
                     COUNT(DISTINCT II.category_id) * 75
                     + (L.price/L.duration) * 10
-                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 60000
-                    - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 1
+                    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 6000000 + 20
+                    - SQRT(POW(L.latitude - ?, 2) + POW(L.longitude - ?, 2)) * 1 + 255
                 ) AS match_score,
                 CASE L.status 
                     WHEN 'open' THEN 1 
@@ -743,6 +743,38 @@ public class M1Controller {
             WHERE B.listid = ?
         """;
         return jdbc.queryForList(sql, String.class, listid);
+    }
+
+    // Get all posting edges (just uid and listid)
+    @GetMapping("/postings")
+    public List<Map<String, Object>> getAllPostings() {
+        String sql = "SELECT uid, listid FROM Posts";
+        return jdbc.queryForList(sql);
+    }
+
+    // Get all assignment edges (just uid and listid)
+    @GetMapping("/assignments")
+    public List<Map<String, Object>> getAllAssignments() {
+        String sql = "SELECT uid, listid FROM AssignedTo";
+        return jdbc.queryForList(sql);
+    }
+
+    @GetMapping("/info/listings")
+    public List<Map<String, Object>> getAllListings() {
+        String sql = """
+            SELECT listid, listing_name, status, price, address
+            FROM Listings
+        """;
+        return jdbc.queryForList(sql);
+    }
+
+    @GetMapping("/info/users")
+    public List<Map<String, Object>> getAllUsers() {
+        String sql = """
+            SELECT uid, name, profile_picture, email, phone_number, overall_rating
+            FROM Users
+        """;
+        return jdbc.queryForList(sql);
     }
 
     // Create a review (after a posting is completed)
