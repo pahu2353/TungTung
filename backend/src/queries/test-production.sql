@@ -29,3 +29,38 @@ WHERE Listings.listid = 80 AND uid = 2 AND Listing.status = 'open'
 -- Feature 5 adding a review
 INSERT INTO Reviews (listid, reviewer_uid, reviewee_uid, rating, comment, timestamp) VALUES
 (68, 42, 35, 5, 'Sharp shopper! Didn’t get distracted by the snack aisle once. Impressive.', '2026-06-25 09:00:00');
+
+-- Fancy Feature 3 display user's total earnings
+SELECT * FROM Users u LEFT OUTER JOIN (
+SELECT SUM(price) total_earnings, uid
+FROM Users NATURAL JOIN AssignedTo NATURAL JOIN Listings
+WHERE status = 'completed'
+GROUP BY uid
+) earnings ON u.uid = earnings.uid
+WHERE u.uid = 1
+
+-- Fancy Feature 5 best match recommendations
+SELECT 
+L.*, 
+COUNT(DISTINCT II.category_id) AS category_matches,
+SQRT(POW(L.latitude - 43.4723, 2) + POW(L.longitude - (-80.5449), 2)) AS distance,
+UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW()) AS deadline_seconds,
+(
+    COUNT(DISTINCT II.category_id) * 75
+    + (L.price/L.duration) * 10
+    - (UNIX_TIMESTAMP(L.deadline) - UNIX_TIMESTAMP(NOW())) / 60000
+    - SQRT(POW(L.latitude - 43.4723, 2) + POW(L.longitude - (-80.5449), 2)) * 1
+) AS match_score,
+CASE L.status 
+    WHEN 'open' THEN 1 
+    WHEN 'taken' THEN 2 
+    WHEN 'completed' THEN 3 
+    WHEN 'cancelled' THEN 4 
+    ELSE 5 
+END AS status_rank
+FROM Listings L
+LEFT JOIN BelongsTo B ON L.listid = B.listid
+LEFT JOIN InterestedIn II 
+ON B.category_id = II.category_id AND II.uid = 1
+GROUP BY L.listid
+ORDER BY status_rank ASC, match_score DESC
