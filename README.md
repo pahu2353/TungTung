@@ -120,3 +120,103 @@ Users can click categories to filter the listings. Multiple category selections 
   - File: `frontend/app/page.tsx`
   - Function:
     - `toggleCategory`
+
+---
+
+### Feature 4: Taking a Listing (Assigning a User to a Task)
+Users can assign and unassign themselves to tasks. Users cannot take non-open listings or assign themselves to their own listings.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoints:
+    - `@PostMapping("/listings/{listid}/assign/{uid}")`
+    - `@PostMapping("/listings/{listid}/unassign/{uid}")`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Functions:
+    - `handleAssign`
+    - `handleUnassign`
+
+---
+
+### Feature 5: Adding a Review (1-5 stars + Comments)
+After a task is marked as complete, the poster is prompted to review the fulfiller(s). If there are multiple fulfillers, the poster is prompted to review each one.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoints:
+    - `@PostMapping("/reviews")`
+    - `@PostMapping("/listings/{listid}/complete")`
+- **Frontend**
+  - File: `frontend/app/profile/page.tsx`, `frontend/components/review-modal.tsx`
+  - Functions:
+    - `handleSubmitReview`
+    - `handleMarkComplete`
+
+---
+
+### Advanced Feature 1: Update Status to “Taken” when Capacity is Reached (Trigger)
+A database trigger ensures that listings are marked as "taken" when capacity is reached and prevents further assignments.
+
+- **Backend**
+  - File: `backend/src/schema/triggers.sql`
+  - Trigger: `trg_listing_status_taken`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Function: (Handled automatically after assignment; no direct frontend code)
+
+---
+
+### Advanced Feature 2: Prevent Self-assignment (Trigger)
+A database trigger prevents users from assigning themselves to their own tasks.
+
+- **Backend**
+  - File: `backend/src/schema/triggers.sql`
+  - Trigger: `trg_prevent_self_assignment`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Function: (Handled by backend; error message shown on failure)
+
+---
+
+### Advanced Feature 3: Display a User’s Total Earnings
+On the user profile page, users can see their lifetime total earnings from fulfilling tasks.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoint:
+    - `@GetMapping("/profile/{uid}")`
+- **Frontend**
+  - File: `frontend/app/profile/page.tsx`
+  - Function:
+    - Displayed in the profile summary section
+
+---
+
+### Advanced Feature 4: Simultaneous Transactions Lock
+Row-level locking (`FOR UPDATE`) is used when assigning users to listings to prevent race conditions. Java Spring Boot is configured with isolation level SERIALIZABLE for maximum consistency.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoints:
+    - `@PostMapping("/listings/{listid}/assign/{uid}")`
+    - `@PostMapping("/listings/{listid}/unassign/{uid}")`
+  - Annotation: `@Transactional(isolation = Isolation.SERIALIZABLE)`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Function: (No direct code; handled by backend)
+
+---
+
+### Advanced Feature 5: Matching Algorithm to Sort Recommended Listings
+Users can filter listings by “best match” to find the most suitable listings based on a weighted sum of category matches, distance from the user’s location, closest deadline, and price.
+
+- **Backend**
+  - File: `backend/src/main/java/com/tungtung/hello/M1Controller.java`
+  - Endpoint:
+    - `@GetMapping("/listings/filterAndSort")`
+- **Frontend**
+  - File: `frontend/app/page.tsx`
+  - Functions:
+    - `fetchFilteredSortedListings`
+    - Sort option UI for "Best

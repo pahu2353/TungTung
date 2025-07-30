@@ -1,7 +1,11 @@
 USE TungTung;
 
 -- Feature 1 account creation (no output for this query)
-INSERT INTO Users(name, phone_number, email, password) VALUES('William Huang', '647-555-1192', 'william@uwaterloo.ca', 'password123');
+
+INSERT INTO Users(name, phone_number, email, password) 
+VALUES('William Huang', '647-555-1192', 'william@uwaterloo.ca', 'password123');
+-- in actual codebase, password is hashed before insertion
+
 -- EXAMPLE OUTPUT TABLE
 -- uid name           profile_picture phone_number email                overall_rating
 -- 1   William Huang  NULL            647-555-1192 william@uwaterloo.ca NULL
