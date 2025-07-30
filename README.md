@@ -2,7 +2,9 @@
 Like Uber, but for services — use our website to make a post asking for a plumber to fix your pipes, a gardener to de-weed your garden, or a math tutor to help you with your midterm prep!
 
 <!-- ![image](https://github.com/user-attachments/assets/a7433faf-eac2-48ee-b30b-99489b020541) -->
-![alt text](image.png)
+<img width="1908" height="1478" alt="image" src="https://github.com/user-attachments/assets/9cfcea69-27e2-4b1c-95d7-39e7d4c345bf" />
+<img width="2146" height="1440" alt="image" src="https://github.com/user-attachments/assets/4c66c8d6-5c19-4f24-8970-e4513a33a931" />
+<img width="1348" height="1062" alt="image" src="https://github.com/user-attachments/assets/6b01a9c1-28dc-442d-8758-b6f3a13a95e3" />
 
 ## Sample Dataset
 The dataset will be entirely populated by users. See below for how to set up the database with our sample dataset.
